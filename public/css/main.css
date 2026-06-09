@@ -295,6 +295,10 @@ section:last-child { margin-bottom: 0; }
 .btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
 .btn-sm { padding: 0.5rem 0.95rem; font-size: 0.84rem; }
+/* 44px minimum touch target on touch devices (WCAG 2.5.5) */
+@media (pointer: coarse) {
+  .btn-sm { min-height: 44px; }
+}
 .btn-gold { background: var(--gold); color: var(--navy); }
 .btn-gold:hover { background: var(--gold-2); }
 .btn-navy { background: var(--navy); color: var(--cream); }
@@ -356,6 +360,8 @@ section:last-child { margin-bottom: 0; }
 }
 .give-cta .section-title { margin-left: auto; margin-right: auto; }
 .give-cta__lede { margin-left: auto; margin-right: auto; }
+.give-cta .prose { margin-left: auto; margin-right: auto; }
+.give-cta .btn { margin-top: var(--s3); }
 
 /* Section header helper (eyebrow + title + optional link) */
 .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s4); }
@@ -385,7 +391,7 @@ section:last-child { margin-bottom: 0; }
 a.card:hover { border-color: var(--line-2); transform: translateY(-3px); box-shadow: var(--shadow-2); }
 .card-body { padding: clamp(1.1rem, 2vw, 1.5rem); display: flex; flex-direction: column; gap: 0.35rem; flex: 1; }
 .card-title { font-size: var(--fs-h3); margin: 0; }
-.card-meta { color: var(--ink-soft); margin: 0; font-size: 0.92rem; }
+.card-meta { color: var(--ink-soft); margin: 0; font-size: 0.92rem; overflow-wrap: break-word; }
 .card-bio { margin: 0.35rem 0 0; color: var(--ink-soft); }
 .card-link { margin-top: auto; }
 .card .card-meta a { color: var(--gold-ink); text-decoration: none; }
@@ -431,7 +437,7 @@ a.card:hover .thumb-img { transform: scale(1.04); }
 }
 .next-step-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
 .next-step-title { font-family: 'Fraunces', serif; font-weight: 600; color: var(--ink); font-size: 1.2rem; letter-spacing: var(--track-tight); }
-.next-step-text { color: var(--ink-soft); font-size: 0.94rem; }
+.next-step-text { color: var(--ink-soft); font-size: 1rem; }
 .next-step-card .next-step-arrow { margin-top: auto; color: var(--gold-ink); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 
 /* ── Home: Sunday School spotlight ───────────────────────────────────────── */
@@ -507,7 +513,8 @@ textarea { resize: vertical; min-height: 7rem; }
 .error-page { max-width: 600px; margin: clamp(3rem, 9vw, 7rem) auto; text-align: center; }
 .error-page .eyebrow { display: flex; justify-content: center; }
 .error-page .page-title { margin-left: auto; margin-right: auto; }
-.error-page .btn { margin: 0 0.3rem; }
+.error-page .prose { margin-left: auto; margin-right: auto; }
+.error-page .btn { margin: var(--s4) 0.3rem 0; }
 .error-code { font-family: 'Fraunces', serif; font-size: clamp(4rem, 14vw, 9rem); line-height: 1; color: var(--gold-ink); margin-bottom: var(--s2); }
 
 /* ── Admin tables ────────────────────────────────────────────────────────── */
@@ -556,7 +563,7 @@ main.page.admin { padding-top: var(--s4); }
 .conflict-list dt { font-weight: 600; color: var(--ink-soft); margin-top: 0.6rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
 .conflict-list dd { margin: 0.15rem 0 0; word-break: break-word; }
 .conflict-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: var(--s3); }
-.back-link { margin-bottom: var(--s3); }
+.back-link { display: inline-block; margin-bottom: var(--s3); }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .site-footer {
@@ -570,7 +577,7 @@ main.page.admin { padding-top: var(--s4); }
 .footer-grid { display: grid; grid-template-columns: 1fr; gap: var(--s4); }
 @media (min-width: 760px) { .footer-grid { grid-template-columns: 1.3fr 1fr 1fr; } }
 .footer-heading { color: var(--cream); font-family: 'Fraunces', serif; font-size: 1.15rem; margin: 0 0 var(--s2); }
-.site-footer p { margin-bottom: 0.4rem; }
+.site-footer p { margin-bottom: 0.4rem; overflow-wrap: break-word; }
 .site-footer a { color: var(--gold-2); text-decoration: none; }
 .site-footer a:hover { color: var(--cream); }
 .footer-bottom { text-align: center; margin: var(--s5) 0 0; padding-top: var(--s3); border-top: 1px solid var(--line-navy); color: var(--cream-soft); font-size: 0.85rem; }
