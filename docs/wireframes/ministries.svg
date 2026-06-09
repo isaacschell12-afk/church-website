@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="463" viewBox="0 0 900 463" font-family="monospace">
+<rect width="900" height="463" fill="#fdfdfd"/>
+<text x="16" y="28" font-size="15" font-weight="bold" font-family="monospace">Ministries — /ministries</text>
+<rect x="16" y="46" width="868" height="56" fill="#fff" stroke="#444"/>
+<text x="26" y="66" font-size="11.5" font-family="monospace" fill="#222">HEADER — logo | nav links | Plan a Visit / Give CTAs</text>
+<rect x="16" y="110" width="868" height="84" fill="#fff" stroke="#444"/>
+<text x="26" y="130" font-size="11.5" font-family="monospace" fill="#222">PAGE INTRO — eyebrow, h1 "Ministries", lede</text>
+<rect x="16" y="202" width="284" height="126" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="158" y="259" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">ministry card (16:10 image +</text>
+<text x="158" y="272" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">name/desc/leader/email)</text>
+<rect x="308" y="202" width="284" height="126" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="450" y="265" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">ministry card</text>
+<rect x="600" y="202" width="284" height="126" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="742" y="265" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">ministry card</text>
+<rect x="16" y="336" width="868" height="84" fill="#fff" stroke="#444"/>
+<text x="26" y="356" font-size="11.5" font-family="monospace" fill="#222">FOOTER — church + tagline | visit info | connect links | copyright</text>
+<text x="16" y="442" font-size="11" font-family="sans-serif" font-style="italic" fill="#666">Directory of ministries: image cards with description, leader, and contact email.</text>
+</svg>

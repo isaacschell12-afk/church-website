@@ -563,7 +563,7 @@ main.page.admin { padding-top: var(--s4); }
 .conflict-list dt { font-weight: 600; color: var(--ink-soft); margin-top: 0.6rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
 .conflict-list dd { margin: 0.15rem 0 0; word-break: break-word; }
 .conflict-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: var(--s3); }
-.back-link { display: inline-block; margin-bottom: var(--s3); }
+.back-link { margin-bottom: var(--s3); }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .site-footer {
