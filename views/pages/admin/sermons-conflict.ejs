@@ -1,0 +1,42 @@
+<section>
+  <h1 class="page-title">Edit Conflict — <%= entityTitle %></h1>
+  <p class="prose">
+    This record was changed by someone else after you opened the edit form.
+    Compare the two versions below, then choose which one to keep.
+  </p>
+
+  <div class="conflict-grid">
+    <div class="conflict-col">
+      <h2 class="section-title">Current (saved) version</h2>
+      <dl class="conflict-list">
+        <% fields.forEach(function (f) { %>
+          <dt><%= f.label %></dt>
+          <dd><%= (current[f.key] === true) ? 'Yes' : (current[f.key] === false) ? 'No' : (current[f.key] == null ? '' : current[f.key]) %></dd>
+        <% }) %>
+      </dl>
+    </div>
+
+    <div class="conflict-col">
+      <h2 class="section-title">Your submitted version</h2>
+      <dl class="conflict-list">
+        <% fields.forEach(function (f) { %>
+          <dt><%= f.label %></dt>
+          <dd><%= (submitted[f.key] === true) ? 'Yes' : (submitted[f.key] === false) ? 'No' : (submitted[f.key] == null ? '' : submitted[f.key]) %></dd>
+        <% }) %>
+      </dl>
+    </div>
+  </div>
+
+  <div class="conflict-actions">
+    <form class="inline-form" method="POST" action="<%= base %>/<%= id %>/conflict/keep">
+      <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+      <input type="hidden" name="token" value="<%= token %>" />
+      <button type="submit" class="btn btn-outline">Keep Current</button>
+    </form>
+    <form class="inline-form" method="POST" action="<%= base %>/<%= id %>/conflict/save">
+      <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+      <input type="hidden" name="token" value="<%= token %>" />
+      <button type="submit" class="btn btn-navy">Save Mine</button>
+    </form>
+  </div>
+</section>

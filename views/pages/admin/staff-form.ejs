@@ -1,0 +1,32 @@
+<section>
+  <a class="btn btn-outline back-link" href="/admin/staff">&larr; Back to staff</a>
+  <h1 class="page-title"><%= mode === 'edit' ? 'Edit Staff Member' : 'New Staff Member' %></h1>
+
+  <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
+
+  <form class="admin-form" method="POST" action="<%= mode === 'edit' ? '/admin/staff/' + record.id : '/admin/staff' %>">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+    <% if (mode === 'edit') { %>
+      <input type="hidden" name="last_modified" value="<%= record.last_modified || '' %>" />
+    <% } %>
+
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" maxlength="100" value="<%= record.name || '' %>" required />
+
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" maxlength="100" value="<%= record.title || '' %>" />
+
+    <label for="bio">Bio</label>
+    <textarea id="bio" name="bio" rows="6"><%= record.bio || '' %></textarea>
+
+    <label for="image_url">Photo</label>
+    <input type="text" id="image_url" name="image_url" value="<%= record.image_url || '' %>" />
+    <div class="upload-controls" data-upload-for="image_url">
+      <input type="file" class="upload-file" accept="image/*" data-upload-input />
+      <button type="button" class="btn btn-outline" data-upload-button>Upload Photo</button>
+      <span class="upload-status" data-upload-status></span>
+    </div>
+
+    <button type="submit" class="btn btn-navy">Save</button>
+  </form>
+</section>

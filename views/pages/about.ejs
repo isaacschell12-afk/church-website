@@ -1,0 +1,32 @@
+<section>
+  <h1 class="page-title">About Us</h1>
+  <% if (church && church.about) { %>
+    <p class="prose"><%= church.about %></p>
+  <% } %>
+  <% if (church && church.mission_statement) { %>
+    <h2 class="section-title">Our Mission</h2>
+    <p class="prose"><%= church.mission_statement %></p>
+  <% } %>
+</section>
+
+<section>
+  <h2 class="section-title">Our Team</h2>
+  <% if (staff && staff.length) { %>
+    <div class="card-grid">
+      <% staff.forEach(function (member) { %>
+        <div class="card staff-card">
+          <div class="thumb skeleton thumb-portrait">
+            <img class="thumb-img" loading="lazy" src="<%= member.image_url ? member.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= member.name %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+          </div>
+          <div class="card-body">
+            <h3 class="card-title"><%= member.name %></h3>
+            <% if (member.title) { %><p class="card-meta"><%= member.title %></p><% } %>
+            <% if (member.bio) { %><p class="card-bio"><%= member.bio %></p><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty">Staff information coming soon.</p>
+  <% } %>
+</section>

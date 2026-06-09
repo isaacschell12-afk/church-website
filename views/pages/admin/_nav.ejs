@@ -1,0 +1,29 @@
+<header class="admin-header">
+  <div class="container nav-bar">
+    <a class="brand" href="/admin">
+      <span class="brand-name"><%= church && church.church_name ? church.church_name : 'Church' %> Admin</span>
+    </a>
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" data-nav-toggle>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+    <nav class="main-nav" data-nav>
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/sermons">Sermons</a>
+      <a href="/admin/events">Events</a>
+      <a href="/admin/ministries">Ministries</a>
+      <a href="/admin/announcements">Announcements</a>
+      <a href="/admin/staff">Staff</a>
+      <% if (locals.user && user.role === 'superadmin') { %>
+        <a href="/admin/church">Church</a>
+        <a href="/admin/users">Users</a>
+      <% } %>
+      <a href="/" target="_blank" rel="noopener">View site</a>
+      <form class="inline-form" method="POST" action="/admin/logout">
+        <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+        <button type="submit" class="btn btn-ghost">Log out</button>
+      </form>
+    </nav>
+  </div>
+</header>

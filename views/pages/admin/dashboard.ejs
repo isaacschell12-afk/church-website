@@ -1,0 +1,24 @@
+<section>
+  <h1 class="page-title">Dashboard</h1>
+
+  <div class="stat-grid">
+    <div class="stat"><span class="stat-num"><%= counts.sermons %></span><span class="stat-label">Sermons</span></div>
+    <div class="stat"><span class="stat-num"><%= counts.events %></span><span class="stat-label">Events</span></div>
+    <div class="stat"><span class="stat-num"><%= counts.ministries %></span><span class="stat-label">Ministries</span></div>
+    <div class="stat"><span class="stat-num"><%= counts.staff %></span><span class="stat-label">Staff</span></div>
+    <div class="stat"><span class="stat-num"><%= counts.announcements %></span><span class="stat-label">Active Announcements</span></div>
+  </div>
+
+  <h2 class="section-title">Manage</h2>
+  <div class="quick-nav">
+    <a class="btn btn-navy" href="/admin/sermons">Sermons</a>
+    <a class="btn btn-navy" href="/admin/events">Events</a>
+    <a class="btn btn-navy" href="/admin/ministries">Ministries</a>
+    <a class="btn btn-navy" href="/admin/announcements">Announcements</a>
+    <a class="btn btn-navy" href="/admin/staff">Staff</a>
+    <% if (locals.user && user.role === 'superadmin') { %>
+      <a class="btn btn-gold" href="/admin/church">Church Info</a>
+      <a class="btn btn-gold" href="/admin/users">Users</a>
+    <% } %>
+  </div>
+</section>

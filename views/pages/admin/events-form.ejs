@@ -1,0 +1,30 @@
+<section>
+  <a class="btn btn-outline back-link" href="/admin/events">&larr; Back to events</a>
+  <h1 class="page-title"><%= mode === 'edit' ? 'Edit Event' : 'New Event' %></h1>
+
+  <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
+
+  <form class="admin-form" method="POST" action="<%= mode === 'edit' ? '/admin/events/' + record.id : '/admin/events' %>">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+    <% if (mode === 'edit') { %>
+      <input type="hidden" name="last_modified" value="<%= record.last_modified || '' %>" />
+    <% } %>
+
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" maxlength="200" value="<%= record.title || '' %>" required />
+
+    <label for="date">Date</label>
+    <input type="date" id="date" name="date" value="<%= record.date || '' %>" required />
+
+    <label for="time">Time</label>
+    <input type="time" id="time" name="time" value="<%= record.time ? String(record.time).slice(0,5) : '' %>" />
+
+    <label for="location">Location</label>
+    <input type="text" id="location" name="location" maxlength="200" value="<%= record.location || '' %>" />
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="6"><%= record.description || '' %></textarea>
+
+    <button type="submit" class="btn btn-navy">Save</button>
+  </form>
+</section>

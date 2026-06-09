@@ -1,0 +1,20 @@
+<section>
+  <h1 class="page-title">Events</h1>
+
+  <% if (events && events.length) { %>
+    <div class="card-grid">
+      <% events.forEach(function (e) { %>
+        <div class="card event-card">
+          <div class="card-body">
+            <h3 class="card-title"><%= e.title %></h3>
+            <p class="card-meta"><%= fmtDate(e.date) %><% if (e.time) { %> · <%= fmtTime(e.time) %><% } %></p>
+            <% if (e.location) { %><p class="card-meta"><%= e.location %></p><% } %>
+            <% if (e.description) { %><p class="card-bio"><%= e.description %></p><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty">No upcoming events — check back soon</p>
+  <% } %>
+</section>

@@ -1,0 +1,31 @@
+<section>
+  <a class="btn btn-outline back-link" href="/admin/sermons">&larr; Back to sermons</a>
+  <h1 class="page-title"><%= mode === 'edit' ? 'Edit Sermon' : 'New Sermon' %></h1>
+
+  <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
+
+  <form class="admin-form" method="POST" action="<%= mode === 'edit' ? '/admin/sermons/' + record.id : '/admin/sermons' %>">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+    <% if (mode === 'edit') { %>
+      <input type="hidden" name="last_modified" value="<%= record.last_modified || '' %>" />
+    <% } %>
+
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" maxlength="200" value="<%= record.title || '' %>" required />
+
+    <label for="date">Date</label>
+    <input type="date" id="date" name="date" value="<%= record.date || '' %>" required />
+
+    <label for="pastor">Pastor</label>
+    <input type="text" id="pastor" name="pastor" maxlength="100" value="<%= record.pastor || '' %>" required />
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="6"><%= record.description || '' %></textarea>
+
+    <label for="youtube_id">YouTube ID</label>
+    <input type="text" id="youtube_id" name="youtube_id" maxlength="11" value="<%= record.youtube_id || '' %>" required />
+    <p class="field-note">Enter the 11-character video ID only, not the full URL</p>
+
+    <button type="submit" class="btn btn-navy">Save</button>
+  </form>
+</section>

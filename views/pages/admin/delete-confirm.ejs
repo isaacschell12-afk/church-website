@@ -1,0 +1,12 @@
+<section>
+  <h1 class="page-title">Confirm Delete</h1>
+  <p class="prose">Are you sure you want to delete <strong><%= label %></strong>? This cannot be undone</p>
+
+  <div class="conflict-actions">
+    <a class="btn btn-outline" href="<%= base %>">Cancel</a>
+    <form class="inline-form" method="POST" action="<%= base %>/<%= id %>/delete-confirm">
+      <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</section>

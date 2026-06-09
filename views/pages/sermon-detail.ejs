@@ -1,0 +1,21 @@
+<section>
+  <a class="btn btn-outline back-link" href="/sermons">&larr; Back to sermons</a>
+
+  <h1 class="page-title"><%= sermon.title %></h1>
+  <p class="card-meta"><%= sermon.pastor %> · <%= fmtDate(sermon.date) %></p>
+
+  <div class="video-wrap">
+    <p class="video-fallback">This video is temporarily unavailable — please check back soon</p>
+    <iframe
+      class="video-frame"
+      src="https://www.youtube-nocookie.com/embed/<%= sermon.youtube_id %>"
+      title="<%= sermon.title %>"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+  </div>
+
+  <% if (sermon.description) { %>
+    <div class="prose sermon-description"><%= sermon.description %></div>
+  <% } %>
+</section>
