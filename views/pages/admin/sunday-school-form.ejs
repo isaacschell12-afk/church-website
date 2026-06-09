@@ -1,0 +1,30 @@
+<section>
+  <a class="btn btn-outline back-link" href="/admin/sunday-school">&larr; Back to Sunday School</a>
+  <h1 class="page-title"><%= mode === 'edit' ? 'Edit Sunday School Class' : 'New Sunday School Class' %></h1>
+
+  <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
+
+  <form class="admin-form" method="POST" action="<%= mode === 'edit' ? '/admin/sunday-school/' + record.id : '/admin/sunday-school' %>">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+    <% if (mode === 'edit') { %>
+      <input type="hidden" name="last_modified" value="<%= record.last_modified || '' %>" />
+    <% } %>
+
+    <label for="name">Class Name</label>
+    <input type="text" id="name" name="name" maxlength="200" value="<%= record.name || '' %>" required />
+
+    <label for="age_group">Age Group</label>
+    <input type="text" id="age_group" name="age_group" maxlength="100" value="<%= record.age_group || '' %>" />
+
+    <label for="location">Room / Location</label>
+    <input type="text" id="location" name="location" maxlength="200" value="<%= record.location || '' %>" />
+
+    <label for="teacher">Teacher</label>
+    <input type="text" id="teacher" name="teacher" maxlength="100" value="<%= record.teacher || '' %>" />
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="6"><%= record.description || '' %></textarea>
+
+    <button type="submit" class="btn btn-navy">Save</button>
+  </form>
+</section>

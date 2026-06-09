@@ -1,0 +1,46 @@
+<section>
+  <div class="admin-bar">
+    <h1 class="page-title">Sunday School</h1>
+    <a class="btn btn-gold" href="/admin/sunday-school/new">Add New</a>
+  </div>
+
+  <% if (query && query.success) { %><p class="flash flash-success">Saved successfully</p><% } %>
+  <% if (query && query.error) { %><p class="flash flash-error">There was a problem with that request</p><% } %>
+
+  <% if (rows && rows.length) { %>
+    <table class="admin-table">
+      <thead>
+        <tr><th>Order</th><th>Name</th><th>Age Group</th><th>Teacher</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <% rows.forEach(function (r, i) { %>
+          <tr>
+            <td class="order-cell">
+              <form class="inline-form" method="POST" action="/admin/sunday-school/<%= r.id %>/move">
+                <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+                <input type="hidden" name="direction" value="up" />
+                <button type="submit" class="btn btn-outline btn-sm" <%= (offset + i) === 0 ? 'disabled' : '' %>>&uarr;</button>
+              </form>
+              <form class="inline-form" method="POST" action="/admin/sunday-school/<%= r.id %>/move">
+                <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+                <input type="hidden" name="direction" value="down" />
+                <button type="submit" class="btn btn-outline btn-sm" <%= (offset + i) === (total - 1) ? 'disabled' : '' %>>&darr;</button>
+              </form>
+            </td>
+            <td><%= r.name %></td>
+            <td><%= r.age_group || '' %></td>
+            <td><%= r.teacher || '' %></td>
+            <td class="row-actions">
+              <a class="btn btn-outline btn-sm" href="/admin/sunday-school/<%= r.id %>/edit">Edit</a>
+              <a class="btn btn-danger btn-sm" href="/admin/sunday-school/<%= r.id %>/delete">Delete</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <%- include('./_pagination', { base: '/admin/sunday-school', page: page, totalPages: totalPages }) %>
+  <% } else { %>
+    <p class="empty">No Sunday School classes yet.</p>
+  <% } %>
+</section>

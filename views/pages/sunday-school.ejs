@@ -1,0 +1,40 @@
+<section>
+  <h1 class="page-title">Sunday School</h1>
+
+  <% if (church && church.sunday_school_intro) { %>
+    <p class="prose prose-prewrap"><%= church.sunday_school_intro %></p>
+  <% } %>
+
+  <% if (church && church.sunday_school_schedule) { %>
+    <div class="band">
+      <h2 class="section-title">When We Meet</h2>
+      <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
+    </div>
+  <% } %>
+</section>
+
+<section>
+  <h2 class="section-title">Our Classes</h2>
+  <% if (classes && classes.length) { %>
+    <div class="card-grid">
+      <% classes.forEach(function (c) { %>
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title"><%= c.name %></h3>
+            <% if (c.age_group) { %><p class="card-meta"><%= c.age_group %></p><% } %>
+            <% if (c.location) { %><p class="card-meta">Room: <%= c.location %></p><% } %>
+            <% if (c.teacher) { %><p class="card-meta">Teacher: <%= c.teacher %></p><% } %>
+            <% if (c.description) { %><p class="card-bio"><%= c.description %></p><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty">Class details are coming soon — and there's a place for you in every one of them.</p>
+  <% } %>
+</section>
+
+<section class="give-cta">
+  <h2 class="section-title">New here? We'd love to meet you.</h2>
+  <a class="btn btn-gold" href="/visit">Plan a Visit</a>
+</section>
