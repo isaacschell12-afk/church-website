@@ -6,6 +6,8 @@
   <title><%= typeof title !== 'undefined' && title ? title : 'Church' %><% if (church && church.church_name) { %> — <%= church.church_name %><% } %></title>
   <meta name="csrf-token" content="<%= locals.csrfToken || '' %>" />
   <link rel="icon" href="<%= church && church.favicon_url ? church.favicon_url : '/images/favicon.ico' %>" />
+  <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-600.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="/css/fonts/inter-400.woff2" crossorigin />
   <link rel="stylesheet" href="/css/main.css" />
 </head>
 <body>
@@ -14,7 +16,7 @@
   <% if (locals.admin) { %>
     <%- include('../pages/admin/_nav') %>
   <% } else { %>
-    <header class="site-header">
+    <header class="site-header" data-site-header>
       <div class="container nav-bar">
         <a class="brand" href="/">
           <% if (church && church.logo_url) { %>
@@ -23,12 +25,12 @@
             <span class="brand-name"><%= church && church.church_name ? church.church_name : 'Our Church' %></span>
           <% } %>
         </a>
-        <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" data-nav-toggle>
+        <button class="nav-toggle" aria-label="Toggle navigation" aria-controls="primary-nav" aria-expanded="false" data-nav-toggle>
           <span class="nav-toggle-bar"></span>
           <span class="nav-toggle-bar"></span>
           <span class="nav-toggle-bar"></span>
         </button>
-        <nav class="main-nav" data-nav>
+        <nav class="main-nav" id="primary-nav" aria-label="Primary" data-nav>
           <a href="/">Home</a>
           <a href="/about">About</a>
           <a href="/sunday-school">Sunday School</a>
@@ -44,7 +46,7 @@
     </header>
   <% } %>
 
-  <main id="main" class="container page">
+  <main id="main" class="container page<%= locals.admin ? ' admin' : '' %>">
     <%- include(bodyPath) %>
   </main>
 
@@ -52,18 +54,20 @@
     <footer class="site-footer">
       <div class="container footer-grid">
         <div>
-          <h3 class="footer-heading"><%= church && church.church_name ? church.church_name : 'Our Church' %></h3>
+          <h2 class="footer-heading"><%= church && church.church_name ? church.church_name : 'Our Church' %></h2>
           <% if (church && church.tagline) { %><p><%= church.tagline %></p><% } %>
+          <p><a href="/visit">Plan a visit &rarr;</a></p>
         </div>
         <div>
-          <h3 class="footer-heading">Visit</h3>
+          <h2 class="footer-heading">Visit</h2>
           <% if (church && church.address) { %><p><%= church.address %></p><% } %>
           <% if (church && church.service_times) { %><p><%= church.service_times %></p><% } %>
         </div>
         <div>
-          <h3 class="footer-heading">Contact</h3>
+          <h2 class="footer-heading">Connect</h2>
           <% if (church && church.phone) { %><p><%= church.phone %></p><% } %>
           <% if (church && church.email) { %><p><a href="mailto:<%= church.email %>"><%= church.email %></a></p><% } %>
+          <p><a href="/contact">Send a message &rarr;</a></p>
         </div>
       </div>
       <p class="footer-bottom">&copy; <%= church && church.church_name ? church.church_name : 'Our Church' %></p>

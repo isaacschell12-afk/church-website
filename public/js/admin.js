@@ -1,4 +1,6 @@
-/* Vanilla JS for the church site: mobile hamburger nav + admin image uploads. */
+/* Vanilla JS for the church site:
+   mobile hamburger nav + admin image uploads + sticky-header condense + scroll reveal.
+   No external dependencies. All motion honors prefers-reduced-motion. */
 (function () {
   'use strict';
 
@@ -12,6 +14,46 @@
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
     });
+
+    // ── Sticky header condense on scroll ──────────────────────────────────
+    var header = document.querySelector('[data-site-header]');
+    if (header) {
+      var onScroll = function () {
+        if (window.scrollY > 8) header.classList.add('is-condensed');
+        else header.classList.remove('is-condensed');
+      };
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    // ── Scroll reveal (no flash: only arm elements not already in view) ────
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var targets = document.querySelectorAll('.reveal, .reveal-group');
+    if (!reduce && 'IntersectionObserver' in window && targets.length) {
+      var io = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) {
+              en.target.classList.add('is-visible');
+              io.unobserve(en.target);
+            }
+          });
+        },
+        { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+      );
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      targets.forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        var inView = r.top < vh && r.bottom > 0;
+        if (inView) {
+          // Already visible at load — show immediately, never hide (no flash).
+          el.classList.add('is-visible');
+        } else {
+          el.classList.add('reveal-armed');
+          io.observe(el);
+        }
+      });
+    }
 
     // ── Admin image uploads ───────────────────────────────────────────────
     var meta = document.querySelector('meta[name="csrf-token"]');
