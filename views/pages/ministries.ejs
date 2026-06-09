@@ -1,10 +1,16 @@
-<section>
-  <h1 class="page-title">Ministries</h1>
+<section class="reveal">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Get involved</p>
+      <h1 class="page-title">Ministries</h1>
+    </div>
+  </div>
+  <p class="lede">There is a place for everyone to serve, grow, and belong. Explore the ministries of our church family and find where you are called to take part.</p>
 
   <% if (ministries && ministries.length) { %>
-    <div class="card-grid">
+    <div class="card-grid reveal-group">
       <% ministries.forEach(function (m) { %>
-        <div class="card ministry-card">
+        <div class="card">
           <div class="thumb skeleton">
             <img class="thumb-img" loading="lazy" src="<%= m.image_url ? m.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= m.name %>" onerror="this.src='/images/church-logo-placeholder.png'" />
           </div>
@@ -13,7 +19,7 @@
             <% if (m.description) { %><p class="card-bio"><%= m.description %></p><% } %>
             <% if (m.leader) { %><p class="card-meta">Led by <%= m.leader %></p><% } %>
             <% if (m.contact_email) { %>
-              <p class="card-meta"><a href="mailto:<%= m.contact_email %>"><%= m.contact_email %></a></p>
+              <p class="card-meta"><a class="content-link" href="mailto:<%= m.contact_email %>"><%= m.contact_email %></a></p>
             <% } %>
           </div>
         </div>

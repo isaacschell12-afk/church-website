@@ -1,19 +1,29 @@
-<section>
-  <h1 class="page-title">Contact Us</h1>
+<section class="reveal">
+  <p class="eyebrow">Get in touch</p>
+  <h1 class="page-title">Contact</h1>
+  <p class="lede">We would love to hear from you. Send a message, find our service times, or visit us in person.</p>
 
   <% if (query && query.success) { %>
-    <p class="flash flash-success">Thank you — we will be in touch soon</p>
+    <p class="flash flash-success">Thank you &mdash; we will be in touch soon.</p>
   <% } %>
   <% if (query && query.error) { %>
-    <p class="flash flash-error">Something went wrong — please email us directly at <%= church && church.email ? church.email : '' %></p>
+    <p class="flash flash-error">Something went wrong &mdash; please email us directly at <%= church && church.email ? church.email : '' %></p>
   <% } %>
 
   <div class="contact-grid">
     <div class="contact-info">
-      <% if (church && church.address) { %><p><strong>Address</strong><br /><%= church.address %></p><% } %>
-      <% if (church && church.phone) { %><p><strong>Phone</strong><br /><%= church.phone %></p><% } %>
-      <% if (church && church.email) { %><p><strong>Email</strong><br /><a href="mailto:<%= church.email %>"><%= church.email %></a></p><% } %>
-      <% if (church && church.service_times) { %><p><strong>Service Times</strong><br /><%= church.service_times %></p><% } %>
+      <% if (church && church.address) { %>
+        <p><strong>Address</strong><br /><%= church.address %></p>
+      <% } %>
+      <% if (church && church.phone) { %>
+        <p><strong>Phone</strong><br /><%= church.phone %></p>
+      <% } %>
+      <% if (church && church.email) { %>
+        <p><strong>Email</strong><br /><a class="content-link" href="mailto:<%= church.email %>"><%= church.email %></a></p>
+      <% } %>
+      <% if (church && church.service_times) { %>
+        <p><strong>Service Times</strong><br /><span class="prose-prewrap"><%= church.service_times %></span></p>
+      <% } %>
     </div>
 
     <form class="contact-form" method="POST" action="/contact">
@@ -29,13 +39,14 @@
       <textarea id="message" name="message" maxlength="2000" rows="6" required></textarea>
 
       <!-- Honeypot: hidden from real users via CSS (.hp-field). Bots that fill it are rejected. -->
-      <input type="text" class="hp-field" name="website" tabindex="-1" autocomplete="off" />
+      <input type="text" class="hp-field" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
       <button type="submit" class="btn btn-navy">Send Message</button>
     </form>
   </div>
 
   <% if (church && church.maps_embed_url) { %>
+    <hr class="rule" />
     <div class="map-embed">
       <iframe class="map-frame" src="<%= church.maps_embed_url %>" title="Map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>

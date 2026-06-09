@@ -1,8 +1,23 @@
-<section>
+<section class="reveal">
+  <p class="eyebrow">Our faith</p>
   <h1 class="page-title">What We Believe</h1>
+  <p class="lede">The convictions that shape our worship, our teaching, and our life together.</p>
+</section>
+
+<section class="reveal">
   <% if (church && church.statement_of_faith) { %>
     <div class="prose prose-prewrap"><%= church.statement_of_faith %></div>
   <% } else { %>
     <p class="empty">Our statement of faith is coming soon.</p>
   <% } %>
+</section>
+
+<section class="reveal">
+  <hr class="rule" />
+  <div class="give-cta">
+    <p class="eyebrow">Come and see</p>
+    <h2 class="section-title">We would love to meet you</h2>
+    <p class="prose">If these beliefs resonate with you, the best next step is simply to join us in person.</p>
+    <a class="btn btn-gold" href="/visit">Plan your visit &rarr;</a>
+  </div>
 </section>

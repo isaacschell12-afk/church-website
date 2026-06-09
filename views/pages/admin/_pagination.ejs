@@ -2,12 +2,12 @@
   <% if (page > 1) { %>
     <a class="btn btn-outline" href="<%= base %>?page=<%= page - 1 %>">Previous</a>
   <% } else { %>
-    <span class="btn btn-outline is-disabled">Previous</span>
+    <span class="btn btn-outline is-disabled" aria-disabled="true">Previous</span>
   <% } %>
   <span class="page-indicator">Page <%= page %> of <%= totalPages %></span>
   <% if (page < totalPages) { %>
     <a class="btn btn-outline" href="<%= base %>?page=<%= page + 1 %>">Next</a>
   <% } else { %>
-    <span class="btn btn-outline is-disabled">Next</span>
+    <span class="btn btn-outline is-disabled" aria-disabled="true">Next</span>
   <% } %>
 </nav>
