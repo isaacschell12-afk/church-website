@@ -27,7 +27,7 @@
       <% staff.forEach(function (member) { %>
         <div class="card">
           <div class="thumb thumb-portrait skeleton">
-            <img class="thumb-img" loading="lazy" src="<%= member.image_url ? member.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= member.name %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+            <img class="thumb-img" loading="lazy" src="<%= member.image_url ? member.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= member.name %>" data-fallback="/images/church-logo-placeholder.png" />
           </div>
           <div class="card-body">
             <h3 class="card-title"><%= member.name %></h3>

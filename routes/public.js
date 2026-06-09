@@ -36,7 +36,7 @@ router.get(
 
     res.render('layouts/main', {
       bodyPath: '../pages/home',
-      title: church.church_name || 'Home',
+      title: (church && church.church_name) || 'Home',
       latestSermons: latestSermons.rows,
       upcomingEvents: upcomingEvents.rows,
       announcements: announcements.rows,

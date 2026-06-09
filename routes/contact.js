@@ -16,17 +16,31 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// The only source label our forms ever send (views/pages/visit.ejs). Anything
+// else is a forged submission trying to spoof an internal trust label.
+const ALLOWED_SOURCES = ['Planning a visit'];
+
 const contactSchema = z.object({
-  name: z.string().min(1).max(100),
+  // Reject CR/LF and other control characters so the name can never inject
+  // headers when interpolated into the email Subject.
+  name: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[^\r\n\x00-\x1f\x7f]*$/, 'Name contains invalid characters'),
   email: z.string().email().max(200),
   message: z.string().min(1).max(2000),
   // Optional origin label (e.g. "Planning a visit") so emails from the Plan a
-  // Visit form are identifiable without a second mail route. Validated + capped.
+  // Visit form are identifiable without a second mail route. Constrained to a
+  // known allowlist since it is only ever set by the site's own forms.
   source: z
     .string()
     .max(100)
     .optional()
-    .transform((v) => (v == null || v.trim() === '' ? null : v.trim())),
+    .transform((v) => (v == null || v.trim() === '' ? null : v.trim()))
+    .refine((v) => v === null || ALLOWED_SOURCES.includes(v), {
+      message: 'Unknown source',
+    }),
 });
 
 // POST /contact
@@ -61,7 +75,9 @@ router.post(
 
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
+      // Resend v4 does not throw on API errors — failures come back in the
+      // `error` field, so it must be checked explicitly.
+      const { error } = await resend.emails.send({
         from: `Church Website <${process.env.CHURCH_CONTACT_EMAIL}>`,
         to: process.env.CHURCH_CONTACT_EMAIL,
         replyTo: email,
@@ -74,6 +90,13 @@ router.post(
           `Email: ${email}\n\n` +
           `Message:\n${message}\n`,
       });
+      if (error) {
+        console.error(
+          `[${new Date().toISOString()}] contact email send failed:`,
+          error
+        );
+        return res.redirect(source ? '/visit?error=1' : '/contact?error=1');
+      }
       return res.redirect(source ? '/visit?success=1' : '/contact?success=1');
     } catch (err) {
       console.error(

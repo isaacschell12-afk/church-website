@@ -21,7 +21,7 @@
       <div class="container nav-bar">
         <a class="brand" href="/">
           <% if (church && church.logo_url) { %>
-            <img class="brand-logo" src="<%= church.logo_url %>" alt="<%= church.church_name %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+            <img class="brand-logo" src="<%= church.logo_url %>" alt="<%= church.church_name %>" data-fallback="/images/church-logo-placeholder.png" />
           <% } else { %>
             <span class="brand-name"><%= church && church.church_name ? church.church_name : 'Our Church' %></span>
           <% } %>
