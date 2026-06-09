@@ -1,14 +1,23 @@
-<section>
-  <h1 class="page-title">Sermons</h1>
+<section class="reveal">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Messages</p>
+      <h1 class="page-title">Sermons</h1>
+    </div>
+  </div>
+
+  <p class="lede">Revisit recent teaching and dig into the Scriptures with us. Search the archive by title or by the pastor who brought the message.</p>
 
   <form class="search-form" method="GET" action="/sermons">
     <input type="text" name="search" value="<%= search %>" placeholder="Search by title or pastor" aria-label="Search sermons" />
     <input type="hidden" name="page" value="1" />
     <button type="submit" class="btn btn-navy">Search</button>
   </form>
+</section>
 
+<section class="reveal">
   <% if (sermons && sermons.length) { %>
-    <div class="card-grid">
+    <div class="card-grid reveal-group">
       <% sermons.forEach(function (s) { %>
         <a class="card sermon-card" href="/sermons/<%= s.id %>">
           <div class="thumb skeleton">

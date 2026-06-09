@@ -1,22 +1,30 @@
-<section>
+<section class="reveal">
+  <p class="eyebrow">For every age</p>
   <h1 class="page-title">Sunday School</h1>
 
   <% if (church && church.sunday_school_intro) { %>
-    <p class="prose prose-prewrap"><%= church.sunday_school_intro %></p>
-  <% } %>
-
-  <% if (church && church.sunday_school_schedule) { %>
-    <div class="band">
-      <h2 class="section-title">When We Meet</h2>
-      <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
-    </div>
+    <p class="lede prose prose-prewrap"><%= church.sunday_school_intro %></p>
   <% } %>
 </section>
 
-<section>
-  <h2 class="section-title">Our Classes</h2>
+<% if (church && church.sunday_school_schedule) { %>
+  <section class="band-navy reveal">
+    <p class="eyebrow">Gather with us</p>
+    <h2 class="section-title">When We Meet</h2>
+    <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
+  </section>
+<% } %>
+
+<section class="reveal">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Grow together</p>
+      <h2 class="section-title">Our Classes</h2>
+    </div>
+  </div>
+
   <% if (classes && classes.length) { %>
-    <div class="card-grid">
+    <div class="card-grid reveal-group">
       <% classes.forEach(function (c) { %>
         <div class="card">
           <div class="card-body">
@@ -34,7 +42,9 @@
   <% } %>
 </section>
 
-<section class="give-cta">
-  <h2 class="section-title">New here? We'd love to meet you.</h2>
+<section class="give-cta reveal">
+  <p class="eyebrow">New here?</p>
+  <h2 class="section-title">We'd love to meet you.</h2>
+  <p class="prose">Come as you are — we'll help you and your family find the right class and a warm welcome.</p>
   <a class="btn btn-gold" href="/visit">Plan a Visit</a>
 </section>

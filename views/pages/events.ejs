@@ -1,8 +1,17 @@
-<section>
-  <h1 class="page-title">Events</h1>
+<section class="reveal">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Gather</p>
+      <h1 class="page-title">Events</h1>
+    </div>
+  </div>
+
+  <p class="lede">Mark your calendar and join us. Here is what is coming up in the life of our church.</p>
+
+  <hr class="rule" />
 
   <% if (events && events.length) { %>
-    <div class="card-grid">
+    <div class="card-grid reveal-group">
       <% events.forEach(function (e) { %>
         <div class="card event-card">
           <div class="card-body">
@@ -15,6 +24,6 @@
       <% }) %>
     </div>
   <% } else { %>
-    <p class="empty">No upcoming events — check back soon</p>
+    <p class="empty">No upcoming events — check back soon.</p>
   <% } %>
 </section>

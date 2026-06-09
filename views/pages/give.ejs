@@ -1,10 +1,13 @@
-<section>
+<section class="reveal">
+  <p class="eyebrow">Generosity</p>
   <h1 class="page-title">Give</h1>
 
   <% if (church && church.give_intro) { %>
-    <p class="prose"><%= church.give_intro %></p>
+    <p class="lede prose prose-prewrap"><%= church.give_intro %></p>
   <% } %>
+</section>
 
+<section class="reveal">
   <% if (church && church.giving_embed_url) { %>
     <div class="give-embed">
       <iframe
@@ -13,11 +16,11 @@
         title="Online giving"
         allow="payment"
       ></iframe>
+      <p class="give-fallback">
+        Having trouble? To give online please visit
+        <a class="content-link" href="<%= church.giving_embed_url %>" target="_blank" rel="noopener"><%= church.giving_embed_url %></a>
+      </p>
     </div>
-    <p class="give-fallback">
-      Having trouble? To give online please visit
-      <a href="<%= church.giving_embed_url %>" target="_blank" rel="noopener"><%= church.giving_embed_url %></a>
-    </p>
   <% } else { %>
     <p class="empty">Online giving will be available soon.</p>
   <% } %>

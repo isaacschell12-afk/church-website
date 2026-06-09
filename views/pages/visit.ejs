@@ -1,32 +1,44 @@
-<section>
+<section class="reveal">
+  <p class="eyebrow">You are welcome here</p>
   <h1 class="page-title">Plan a Visit</h1>
+  <p class="lede">However you found us, whatever questions you bring, there's a place for you in the pew this Sunday.</p>
 
   <% if (query && query.success) { %>
-    <p class="flash flash-success">Thank you — we're so glad you're coming. We'll be in touch soon.</p>
+    <p class="flash flash-success">Thank you &mdash; we're so glad you're coming. We'll be in touch soon.</p>
   <% } %>
   <% if (query && query.error) { %>
-    <p class="flash flash-error">Something went wrong — please email us directly at <%= church && church.email ? church.email : '' %></p>
+    <p class="flash flash-error">Something went wrong &mdash; please email us directly at <%= church && church.email ? church.email : '' %></p>
   <% } %>
+</section>
 
+<section class="reveal">
   <div class="contact-grid">
     <div class="contact-info">
+      <p class="eyebrow">Before you come</p>
+      <h2 class="section-title">What to expect</h2>
+
       <% if (church && church.visit_info) { %>
         <p class="prose prose-prewrap"><%= church.visit_info %></p>
       <% } else { %>
         <p class="empty">Visit details coming soon.</p>
       <% } %>
 
+      <% if ((church && church.service_times) || (church && church.address)) { %>
+        <hr class="rule" />
+      <% } %>
+
       <% if (church && church.service_times) { %>
-        <p><strong>Service Times</strong><br /><%= church.service_times %></p>
+        <p class="prose prose-prewrap"><strong>Service Times</strong><br /><%= church.service_times %></p>
       <% } %>
       <% if (church && church.address) { %>
-        <p><strong>Where to find us</strong><br /><%= church.address %></p>
+        <p class="prose"><strong>Where to find us</strong><br /><%= church.address %></p>
       <% } %>
     </div>
 
     <div>
+      <p class="eyebrow">Say hello first</p>
       <h2 class="section-title">Let us know you're coming</h2>
-      <p>Tell us a little about yourself and we'll have someone ready to welcome you.</p>
+      <p class="prose">Tell us a little about yourself and we'll have someone ready to welcome you.</p>
       <form class="contact-form" method="POST" action="/contact">
         <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
         <input type="hidden" name="source" value="Planning a visit" />
@@ -47,10 +59,14 @@
       </form>
     </div>
   </div>
+</section>
 
-  <% if (church && church.maps_embed_url) { %>
+<% if (church && church.maps_embed_url) { %>
+  <section class="reveal">
+    <p class="eyebrow">Find your way</p>
+    <h2 class="section-title">Getting here</h2>
     <div class="map-embed">
       <iframe class="map-frame" src="<%= church.maps_embed_url %>" title="Map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
-  <% } %>
-</section>
+  </section>
+<% } %>
