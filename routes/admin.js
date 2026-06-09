@@ -413,11 +413,12 @@ router.get(
   '/admin',
   auth,
   catchAsync(async (req, res) => {
-    const [sermons, events, ministries, staff, announcements] = await Promise.all([
+    const [sermons, events, ministries, staff, sundaySchool, announcements] = await Promise.all([
       pool.query('SELECT COUNT(*)::int AS c FROM services'),
       pool.query('SELECT COUNT(*)::int AS c FROM events'),
       pool.query('SELECT COUNT(*)::int AS c FROM ministries'),
       pool.query('SELECT COUNT(*)::int AS c FROM staff'),
+      pool.query('SELECT COUNT(*)::int AS c FROM sunday_school_classes'),
       pool.query(
         `SELECT COUNT(*)::int AS c FROM announcements
          WHERE active = true AND (expiry_utc IS NULL OR expiry_utc > NOW())`
@@ -432,6 +433,7 @@ router.get(
         events: events.rows[0].c,
         ministries: ministries.rows[0].c,
         staff: staff.rows[0].c,
+        sundaySchool: sundaySchool.rows[0].c,
         announcements: announcements.rows[0].c,
       },
     });
@@ -715,6 +717,302 @@ router.post(
   })
 );
 
+// ── SUNDAY SCHOOL CLASSES (editor-accessible: list + move + CRUD w/ conflict) ─
+// Mirrors the ministries CRUD plus the staff-style display_order reorder.
+const sundaySchoolDisplayFields = [
+  { key: 'name', label: 'Name' },
+  { key: 'age_group', label: 'Age group' },
+  { key: 'location', label: 'Room / location' },
+  { key: 'teacher', label: 'Teacher' },
+  { key: 'description', label: 'Description' },
+];
+
+function parseSundaySchool(body) {
+  const schema = z.object({
+    name: z.string().trim().min(1).max(200),
+    age_group: optionalShort(100),
+    location: optionalShort(200),
+    teacher: optionalShort(100),
+    description: optionalText(10000),
+  });
+  return schema.safeParse(body);
+}
+
+router.get(
+  '/admin/sunday-school',
+  auth,
+  catchAsync(async (req, res) => {
+    const page = pageFrom(req);
+    const offset = (page - 1) * PER_PAGE;
+    const [rows, count] = await Promise.all([
+      pool.query(
+        'SELECT * FROM sunday_school_classes ORDER BY display_order ASC, id ASC LIMIT $1 OFFSET $2',
+        [PER_PAGE, offset]
+      ),
+      pool.query('SELECT COUNT(*)::int AS count FROM sunday_school_classes'),
+    ]);
+    const total = count.rows[0].count;
+    const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+    res.render('layouts/main', {
+      bodyPath: '../pages/admin/sunday-school',
+      title: 'Sunday School',
+      admin: true,
+      rows: rows.rows,
+      page,
+      totalPages,
+      offset,
+      total,
+    });
+  })
+);
+
+router.get('/admin/sunday-school/new', auth, (req, res) => {
+  res.render('layouts/main', {
+    bodyPath: '../pages/admin/sunday-school-form',
+    title: 'New Sunday School Class',
+    admin: true,
+    mode: 'new',
+    record: {},
+  });
+});
+
+router.post(
+  '/admin/sunday-school',
+  auth,
+  catchAsync(async (req, res) => {
+    const parsed = parseSundaySchool(req.body);
+    if (!parsed.success) {
+      return res.redirect('/admin/sunday-school/new?error=1');
+    }
+    const { name, age_group, location, teacher, description } = parsed.data;
+    // New classes go to the bottom of the list.
+    const max = await pool.query(
+      'SELECT COALESCE(MAX(display_order), 0) AS m FROM sunday_school_classes'
+    );
+    const nextOrder = Number(max.rows[0].m) + 10;
+    await pool.query(
+      `INSERT INTO sunday_school_classes
+         (name, age_group, location, teacher, description, display_order, created_at, last_modified)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
+      [name, age_group, location, teacher, description, nextOrder]
+    );
+    return res.redirect('/admin/sunday-school?success=1');
+  })
+);
+
+router.get(
+  '/admin/sunday-school/:id/edit',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const result = await pool.query('SELECT * FROM sunday_school_classes WHERE id = $1', [id]);
+    if (result.rows.length === 0) return res.redirect('/admin/sunday-school?error=notfound');
+    const record = result.rows[0];
+    record.last_modified = isoOrEmpty(record.last_modified);
+    res.render('layouts/main', {
+      bodyPath: '../pages/admin/sunday-school-form',
+      title: 'Edit Sunday School Class',
+      admin: true,
+      mode: 'edit',
+      record,
+    });
+  })
+);
+
+router.post(
+  '/admin/sunday-school/:id',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const parsed = parseSundaySchool(req.body);
+    if (!parsed.success) return res.redirect(`/admin/sunday-school/${id}/edit?error=1`);
+
+    const current = await pool.query('SELECT * FROM sunday_school_classes WHERE id = $1', [id]);
+    if (current.rows.length === 0) return res.redirect('/admin/sunday-school?error=notfound');
+
+    const dbModified = isoOrEmpty(current.rows[0].last_modified);
+    if ((req.body.last_modified || '') !== dbModified) {
+      const pending = await pool.query(
+        `INSERT INTO pending_edits (table_name, record_id, submitted_data)
+         VALUES ($1, $2, $3) RETURNING id`,
+        ['sunday_school_classes', id, JSON.stringify(parsed.data)]
+      );
+      return res.redirect(`/admin/sunday-school/${id}/conflict?token=${pending.rows[0].id}`);
+    }
+
+    const { name, age_group, location, teacher, description } = parsed.data;
+    await pool.query(
+      `UPDATE sunday_school_classes
+         SET name = $1, age_group = $2, location = $3, teacher = $4, description = $5,
+             last_modified = NOW()
+       WHERE id = $6`,
+      [name, age_group, location, teacher, description, id]
+    );
+    return res.redirect('/admin/sunday-school?success=1');
+  })
+);
+
+router.get(
+  '/admin/sunday-school/:id/conflict',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const token = req.query.token;
+    const pending = await pool.query(
+      `SELECT * FROM pending_edits WHERE id = $1 AND table_name = 'sunday_school_classes' AND record_id = $2`,
+      [token, id]
+    );
+    if (pending.rows.length === 0) return res.redirect('/admin/sunday-school?error=conflictexpired');
+    const current = await pool.query('SELECT * FROM sunday_school_classes WHERE id = $1', [id]);
+    if (current.rows.length === 0) return res.redirect('/admin/sunday-school?error=notfound');
+    res.render('layouts/main', {
+      bodyPath: '../pages/admin/sermons-conflict',
+      title: 'Conflict — Sunday School',
+      admin: true,
+      base: '/admin/sunday-school',
+      entityTitle: 'Sunday School',
+      token,
+      id,
+      fields: sundaySchoolDisplayFields,
+      current: current.rows[0],
+      submitted: pending.rows[0].submitted_data,
+    });
+  })
+);
+
+router.post(
+  '/admin/sunday-school/:id/conflict/keep',
+  auth,
+  catchAsync(async (req, res) => {
+    await pool.query('DELETE FROM pending_edits WHERE id = $1', [req.body.token || req.query.token]);
+    return res.redirect('/admin/sunday-school?success=1');
+  })
+);
+
+router.post(
+  '/admin/sunday-school/:id/conflict/save',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const token = req.body.token || req.query.token;
+    const pending = await pool.query(
+      `SELECT * FROM pending_edits WHERE id = $1 AND table_name = 'sunday_school_classes' AND record_id = $2`,
+      [token, id]
+    );
+    if (pending.rows.length === 0) return res.redirect('/admin/sunday-school?error=conflictexpired');
+    const d = pending.rows[0].submitted_data;
+    await pool.query(
+      `UPDATE sunday_school_classes
+         SET name = $1, age_group = $2, location = $3, teacher = $4, description = $5,
+             last_modified = NOW()
+       WHERE id = $6`,
+      [d.name, d.age_group, d.location, d.teacher, d.description, id]
+    );
+    await pool.query('DELETE FROM pending_edits WHERE id = $1', [token]);
+    return res.redirect('/admin/sunday-school?success=1');
+  })
+);
+
+router.get(
+  '/admin/sunday-school/:id/delete',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const result = await pool.query('SELECT * FROM sunday_school_classes WHERE id = $1', [id]);
+    if (result.rows.length === 0) return res.redirect('/admin/sunday-school?error=notfound');
+    res.render('layouts/main', {
+      bodyPath: '../pages/admin/delete-confirm',
+      title: 'Delete — Sunday School',
+      admin: true,
+      base: '/admin/sunday-school',
+      id,
+      label: result.rows[0].name,
+    });
+  })
+);
+
+router.post(
+  '/admin/sunday-school/:id/delete-confirm',
+  auth,
+  catchAsync(async (req, res) => {
+    await pool.query('DELETE FROM sunday_school_classes WHERE id = $1', [parseInt(req.params.id, 10)]);
+    return res.redirect('/admin/sunday-school?success=1');
+  })
+);
+
+// Reorder — swap display_order with the adjacent neighbor in a transaction.
+router.post(
+  '/admin/sunday-school/:id/move',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const direction = req.body.direction;
+    if (direction !== 'up' && direction !== 'down') {
+      return res.status(400).render('layouts/main', {
+        bodyPath: '../pages/500',
+        title: 'Bad request',
+        admin: true,
+      });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const target = await client.query(
+        'SELECT id, display_order FROM sunday_school_classes WHERE id = $1 FOR UPDATE',
+        [id]
+      );
+      if (target.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.redirect('/admin/sunday-school?error=notfound');
+      }
+      const order = target.rows[0].display_order;
+
+      const neighborSql =
+        direction === 'up'
+          ? 'SELECT id, display_order FROM sunday_school_classes WHERE display_order < $1 ORDER BY display_order DESC LIMIT 1 FOR UPDATE'
+          : 'SELECT id, display_order FROM sunday_school_classes WHERE display_order > $1 ORDER BY display_order ASC LIMIT 1 FOR UPDATE';
+      const neighbor = await client.query(neighborSql, [order]);
+
+      if (neighbor.rows.length === 0) {
+        await client.query('COMMIT');
+        return res.redirect('/admin/sunday-school');
+      }
+
+      const lo = Math.min(order, neighbor.rows[0].display_order);
+      const hi = Math.max(order, neighbor.rows[0].display_order);
+      const between = await client.query(
+        'SELECT COUNT(*)::int AS c FROM sunday_school_classes WHERE display_order > $1 AND display_order < $2',
+        [lo, hi]
+      );
+      if (between.rows[0].c !== 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).render('layouts/main', {
+          bodyPath: '../pages/500',
+          title: 'Bad request',
+          admin: true,
+        });
+      }
+
+      await client.query(
+        'UPDATE sunday_school_classes SET display_order = $1, last_modified = NOW() WHERE id = $2',
+        [neighbor.rows[0].display_order, id]
+      );
+      await client.query(
+        'UPDATE sunday_school_classes SET display_order = $1, last_modified = NOW() WHERE id = $2',
+        [order, neighbor.rows[0].id]
+      );
+      await client.query('COMMIT');
+      return res.redirect('/admin/sunday-school');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  })
+);
+
 // ── CHURCH INFO (superadmin only) ───────────────────────────────────────────
 const US_TIMEZONES = [
   'America/New_York',
@@ -774,6 +1072,11 @@ router.post(
       hero_cta_label: z.string().max(50).optional().transform((v) => v || 'Watch Latest Sermon'),
       logo_url: z.string().max(2000).optional().transform((v) => v || null),
       favicon_url: z.string().max(2000).optional().transform((v) => v || null),
+      // TMPC additions
+      statement_of_faith: z.string().max(20000).optional().transform((v) => v || null),
+      visit_info: z.string().max(20000).optional().transform((v) => v || null),
+      sunday_school_intro: z.string().max(20000).optional().transform((v) => v || null),
+      sunday_school_schedule: z.string().max(20000).optional().transform((v) => v || null),
     });
 
     const parsed = schema.safeParse(req.body);
@@ -792,12 +1095,14 @@ router.post(
         `INSERT INTO church_info
           (church_name, tagline, about, mission_statement, address, phone, email,
            service_times, timezone, maps_embed_url, giving_embed_url, give_intro,
-           hero_cta_label, logo_url, favicon_url)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+           hero_cta_label, logo_url, favicon_url,
+           statement_of_faith, visit_info, sunday_school_intro, sunday_school_schedule)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
         [
           d.church_name, d.tagline, d.about, d.mission_statement, d.address, d.phone, d.email,
           d.service_times, d.timezone, d.maps_embed_url || null, d.giving_embed_url, d.give_intro,
           d.hero_cta_label, d.logo_url, d.favicon_url,
+          d.statement_of_faith, d.visit_info, d.sunday_school_intro, d.sunday_school_schedule,
         ]
       );
     } else {
@@ -806,12 +1111,15 @@ router.post(
           church_name = $1, tagline = $2, about = $3, mission_statement = $4, address = $5,
           phone = $6, email = $7, service_times = $8, timezone = $9, maps_embed_url = $10,
           giving_embed_url = $11, give_intro = $12, hero_cta_label = $13, logo_url = $14,
-          favicon_url = $15
-         WHERE id = $16`,
+          favicon_url = $15, statement_of_faith = $16, visit_info = $17,
+          sunday_school_intro = $18, sunday_school_schedule = $19
+         WHERE id = $20`,
         [
           d.church_name, d.tagline, d.about, d.mission_statement, d.address, d.phone, d.email,
           d.service_times, d.timezone, d.maps_embed_url || null, d.giving_embed_url, d.give_intro,
-          d.hero_cta_label, d.logo_url, d.favicon_url, existing.rows[0].id,
+          d.hero_cta_label, d.logo_url, d.favicon_url,
+          d.statement_of_faith, d.visit_info, d.sunday_school_intro, d.sunday_school_schedule,
+          existing.rows[0].id,
         ]
       );
     }

@@ -77,33 +77,65 @@ async function seedChurchInfo() {
     console.log(`[${stamp()}] church_info already seeded`);
     return;
   }
+  // Taylor Mill Pentecostal Church (TMPC) seed for a fresh database. Real-world
+  // unknowns (address, phone, email, service times, statement of faith, schedule)
+  // are obvious placeholders/TODO — never presented as fact. Edit from the admin
+  // dashboard under Church Info. The four TMPC fields mirror migration 002.
   await pool.query(
     `INSERT INTO church_info
       (church_name, tagline, about, mission_statement, address, phone, email,
        service_times, timezone, maps_embed_url, giving_embed_url, give_intro,
-       hero_cta_label, logo_url, favicon_url)
+       hero_cta_label, logo_url, favicon_url,
+       statement_of_faith, visit_info, sunday_school_intro, sunday_school_schedule)
      VALUES
-      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+       $16, $17, $18, $19)`,
     [
-      'Grace Community Church',
-      'A place to belong',
-      'Welcome to our church. We are a community of people seeking to follow Jesus together. ' +
-        'Update this text from the admin dashboard under Church Info.',
-      'To know God and to make Him known.',
-      '123 Main Street, Anytown, USA',
-      '(555) 123-4567',
-      'office@yourchurch.com',
-      'Sundays at 9:00 AM and 11:00 AM',
+      'Taylor Mill Pentecostal Church',
+      "Come as you are — you're welcome here.",
+      'Welcome to Taylor Mill Pentecostal Church. We are a Pentecostal family in ' +
+        'Taylor Mill, Kentucky, seeking to follow Jesus together. Update this text ' +
+        'from the admin dashboard under Church Info.',
+      'To know God, to grow in Him, and to make Him known.',
+      '[TODO: street address], Taylor Mill, KY',
+      '[TODO: phone number]',
+      '[TODO: office@TMPCfamily.net]',
+      '[TODO: e.g. "Sunday School 10:00 AM · Worship 11:00 AM" — confirm times]',
       'America/New_York',
       '',
       '',
       'Your generosity makes our ministry possible. Thank you for giving.',
-      'Watch Latest Sermon',
+      'Plan Your Visit',
       null,
       null,
+      // statement_of_faith — structure only; TMPC supplies the real wording.
+      'What We Believe\n\n' +
+        '[TODO: TMPC to supply the final wording. The headings below are a ' +
+        'structure only — do not treat the text under them as the actual ' +
+        'statement of faith.]\n\n' +
+        'God\n[TODO: our belief about God — Father, Son, and Holy Spirit.]\n\n' +
+        'Scripture\n[TODO: our belief about the Bible as God’s Word.]\n\n' +
+        'Salvation\n[TODO: our belief about salvation through Jesus Christ.]\n\n' +
+        'Baptism in the Holy Spirit\n[TODO: our Pentecostal belief about the ' +
+        'baptism in the Holy Spirit.]\n\n' +
+        'The Church\n[TODO: our belief about the Church and life together.]',
+      // visit_info
+      "You're welcome here, and we'd love to meet you. Here's what to expect when " +
+        'you visit.\n\nWhen to arrive\n[TODO: e.g. "Come about 10 minutes early."]\n\n' +
+        'Parking\n[TODO: where to park, and any visitor/accessible spaces.]\n\n' +
+        'What to wear\nCome as you are. What matters is that you came.\n\n' +
+        'Your kids\n[TODO: where children go, and where Sunday School classes meet.]\n\n' +
+        "We can't wait to welcome you in person.",
+      // sunday_school_intro
+      "There's a place for you in Sunday School. Whatever your age or where you are " +
+        'in your walk with God, our classes are a warm, unhurried place to dig into ' +
+        'Scripture and get to know people. Come as you are — bring your questions.',
+      // sunday_school_schedule
+      '[TODO: e.g. "Sunday School meets every Sunday at 10:00 AM, before our ' +
+        '11:00 AM worship service." Confirm times.]',
     ]
   );
-  console.log(`[${stamp()}] seeded church_info placeholder row`);
+  console.log(`[${stamp()}] seeded TMPC church_info row`);
 }
 
 async function seedDefaultAdmin() {

@@ -167,6 +167,37 @@ router.get(
   })
 );
 
+// GET /visit — Plan a Visit
+router.get('/visit', (req, res) => {
+  res.render('layouts/main', {
+    bodyPath: '../pages/visit',
+    title: 'Plan a Visit',
+  });
+});
+
+// GET /beliefs — What We Believe
+router.get('/beliefs', (req, res) => {
+  res.render('layouts/main', {
+    bodyPath: '../pages/beliefs',
+    title: 'What We Believe',
+  });
+});
+
+// GET /sunday-school — Sunday School (intro + schedule + class list)
+router.get(
+  '/sunday-school',
+  catchAsync(async (req, res) => {
+    const classes = await pool.query(
+      'SELECT * FROM sunday_school_classes ORDER BY display_order ASC, id ASC'
+    );
+    res.render('layouts/main', {
+      bodyPath: '../pages/sunday-school',
+      title: 'Sunday School',
+      classes: classes.rows,
+    });
+  })
+);
+
 // GET /give
 router.get('/give', (req, res) => {
   res.render('layouts/main', {

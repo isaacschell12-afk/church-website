@@ -11,6 +11,25 @@
   </div>
 </section>
 
+<section class="next-steps" aria-label="Next steps">
+  <a class="next-step-card" href="/visit">
+    <span class="next-step-title">I'm New</span>
+    <span class="next-step-text">Plan your first visit — here's what to expect.</span>
+  </a>
+  <a class="next-step-card" href="/sunday-school">
+    <span class="next-step-title">Sunday School</span>
+    <span class="next-step-text">A class for every age. Come as you are.</span>
+  </a>
+  <a class="next-step-card" href="/ministries">
+    <span class="next-step-title">Ministries</span>
+    <span class="next-step-text">Find a place to belong and serve.</span>
+  </a>
+  <a class="next-step-card" href="/sermons">
+    <span class="next-step-title">Watch a Message</span>
+    <span class="next-step-text">Catch up on recent sermons.</span>
+  </a>
+</section>
+
 <% if (announcements && announcements.length) { %>
   <section class="announcements" aria-label="Announcements">
     <% announcements.forEach(function (a) { %>
@@ -25,6 +44,18 @@
     <p class="service-times"><%= church.service_times %></p>
   </section>
 <% } %>
+
+<section class="band spotlight">
+  <div class="spotlight-body">
+    <h2 class="section-title">There's a place for you in Sunday School</h2>
+    <% if (church && church.sunday_school_schedule) { %>
+      <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
+    <% } else { %>
+      <p>A warm, unhurried place to dig into Scripture and get to know people — for every age.</p>
+    <% } %>
+  </div>
+  <a class="btn btn-gold" href="/sunday-school">Explore Sunday School</a>
+</section>
 
 <section>
   <h2 class="section-title">Latest Sermons</h2>
