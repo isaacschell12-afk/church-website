@@ -1,0 +1,24 @@
+<section>
+  <p class="back-link"><a class="content-link" href="/admin/messages">&larr; Back to messages</a></p>
+
+  <p class="eyebrow"><%= msg.source || 'Contact form' %></p>
+  <h1 class="page-title">Message from <%= msg.name %></h1>
+  <p class="sermon-detail__meta">
+    <a class="content-link" href="mailto:<%= msg.email %>"><%= msg.email %></a>
+    <span class="dot">&middot;</span>
+    <%= fmtDate(msg.created_at) %>
+  </p>
+
+  <div class="band">
+    <p class="prose prose-prewrap"><%= msg.message %></p>
+  </div>
+
+  <div class="conflict-actions">
+    <a class="btn btn-navy" href="mailto:<%= msg.email %>?subject=Re: your message to the church">Reply by email</a>
+    <form class="inline-form" method="POST" action="/admin/messages/<%= msg.id %>/toggle-read">
+      <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+      <button type="submit" class="btn btn-outline">Mark unread</button>
+    </form>
+    <a class="btn btn-danger" href="/admin/messages/<%= msg.id %>/delete">Delete</a>
+  </div>
+</section>

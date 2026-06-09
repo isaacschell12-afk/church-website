@@ -13,14 +13,15 @@
   <% if (events && events.length) { %>
     <div class="card-grid reveal-group">
       <% events.forEach(function (e) { %>
-        <div class="card event-card">
+        <a class="card event-card" href="/events/<%= e.id %>">
           <div class="card-body">
             <h3 class="card-title"><%= e.title %></h3>
             <p class="card-meta"><%= fmtDate(e.date) %><% if (e.time) { %> · <%= fmtTime(e.time) %><% } %></p>
             <% if (e.location) { %><p class="card-meta"><%= e.location %></p><% } %>
-            <% if (e.description) { %><p class="card-bio"><%= e.description %></p><% } %>
+            <% if (e.description) { %><p class="card-bio card-bio-clamp"><%= e.description %></p><% } %>
+            <span class="card-link next-step-arrow">Details &rarr;</span>
           </div>
-        </div>
+        </a>
       <% }) %>
     </div>
   <% } else { %>

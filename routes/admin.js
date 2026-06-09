@@ -452,17 +452,25 @@ router.get(
   '/admin',
   auth,
   catchAsync(async (req, res) => {
-    const [sermons, events, ministries, staff, sundaySchool, announcements] = await Promise.all([
-      pool.query('SELECT COUNT(*)::int AS c FROM services'),
-      pool.query('SELECT COUNT(*)::int AS c FROM events'),
-      pool.query('SELECT COUNT(*)::int AS c FROM ministries'),
-      pool.query('SELECT COUNT(*)::int AS c FROM staff'),
-      pool.query('SELECT COUNT(*)::int AS c FROM sunday_school_classes'),
-      pool.query(
-        `SELECT COUNT(*)::int AS c FROM announcements
-         WHERE active = true AND (expiry_utc IS NULL OR expiry_utc > NOW())`
-      ),
-    ]);
+    const isSuperadmin = res.locals.user && res.locals.user.role === 'superadmin';
+    const [sermons, events, ministries, staff, sundaySchool, announcements, unreadMessages, recentBackups] =
+      await Promise.all([
+        pool.query('SELECT COUNT(*)::int AS c FROM services'),
+        pool.query('SELECT COUNT(*)::int AS c FROM events'),
+        pool.query('SELECT COUNT(*)::int AS c FROM ministries'),
+        pool.query('SELECT COUNT(*)::int AS c FROM staff'),
+        pool.query('SELECT COUNT(*)::int AS c FROM sunday_school_classes'),
+        pool.query(
+          `SELECT COUNT(*)::int AS c FROM announcements
+           WHERE active = true AND (expiry_utc IS NULL OR expiry_utc > NOW())`
+        ),
+        pool.query('SELECT COUNT(*)::int AS c FROM contact_messages WHERE is_read = false'),
+        isSuperadmin
+          ? pool.query(
+              'SELECT id, created_at, email_sent FROM backups ORDER BY created_at DESC, id DESC LIMIT 5'
+            )
+          : Promise.resolve({ rows: [] }),
+      ]);
     res.render('layouts/main', {
       bodyPath: '../pages/admin/dashboard',
       title: 'Dashboard',
@@ -474,8 +482,104 @@ router.get(
         staff: staff.rows[0].c,
         sundaySchool: sundaySchool.rows[0].c,
         announcements: announcements.rows[0].c,
+        unreadMessages: unreadMessages.rows[0].c,
       },
+      recentBackups: recentBackups.rows,
     });
+  })
+);
+
+// ── CONTACT MESSAGES inbox (list / read / toggle / delete) ──────────────────
+router.get(
+  '/admin/messages',
+  auth,
+  catchAsync(async (req, res) => {
+    const page = pageFrom(req);
+    const offset = (page - 1) * PER_PAGE;
+    const [rows, count, unread] = await Promise.all([
+      pool.query(
+        `SELECT id, name, email, source, is_read, created_at,
+                LEFT(message, 160) AS preview
+         FROM contact_messages
+         ORDER BY created_at DESC, id DESC
+         LIMIT $1 OFFSET $2`,
+        [PER_PAGE, offset]
+      ),
+      pool.query('SELECT COUNT(*)::int AS count FROM contact_messages'),
+      pool.query('SELECT COUNT(*)::int AS c FROM contact_messages WHERE is_read = false'),
+    ]);
+    const totalPages = Math.max(1, Math.ceil(count.rows[0].count / PER_PAGE));
+    res.render('layouts/main', {
+      bodyPath: '../pages/admin/messages',
+      title: 'Messages',
+      admin: true,
+      rows: rows.rows,
+      unread: unread.rows[0].c,
+      page,
+      totalPages,
+    });
+  })
+);
+
+router.get(
+  '/admin/messages/:id',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/messages?error=notfound');
+    // Opening a message marks it read; RETURNING * avoids a second query.
+    const result = await pool.query(
+      'UPDATE contact_messages SET is_read = true WHERE id = $1 RETURNING *',
+      [id]
+    );
+    if (result.rows.length === 0) return res.redirect('/admin/messages?error=notfound');
+    res.render('layouts/main', {
+      bodyPath: '../pages/admin/message-detail',
+      title: 'Message',
+      admin: true,
+      msg: result.rows[0],
+    });
+  })
+);
+
+router.post(
+  '/admin/messages/:id/toggle-read',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/messages?error=notfound');
+    await pool.query('UPDATE contact_messages SET is_read = NOT is_read WHERE id = $1', [id]);
+    return res.redirect('/admin/messages');
+  })
+);
+
+router.get(
+  '/admin/messages/:id/delete',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/messages?error=notfound');
+    const result = await pool.query('SELECT id, name FROM contact_messages WHERE id = $1', [id]);
+    if (result.rows.length === 0) return res.redirect('/admin/messages?error=notfound');
+    res.render('layouts/main', {
+      bodyPath: '../pages/admin/delete-confirm',
+      title: 'Delete — Message',
+      admin: true,
+      base: '/admin/messages',
+      id,
+      label: `message from ${result.rows[0].name}`,
+    });
+  })
+);
+
+router.post(
+  '/admin/messages/:id/delete-confirm',
+  auth,
+  catchAsync(async (req, res) => {
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/messages?error=notfound');
+    await pool.query('DELETE FROM contact_messages WHERE id = $1', [id]);
+    return res.redirect('/admin/messages?success=1');
   })
 );
 
@@ -1335,7 +1439,12 @@ async function authorizeBackup(req) {
 router.post(
   '/admin/backup',
   catchAsync(async (req, res) => {
+    // Dashboard form posts want a redirect back to /admin; the machine
+    // (Bearer-token) flow keeps its JSON contract.
+    const wantsHtml = (req.headers.accept || '').includes('text/html');
+
     if (!(await authorizeBackup(req))) {
+      if (wantsHtml) return res.redirect('/admin/login');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -1396,6 +1505,9 @@ router.post(
       );
     }
 
+    if (wantsHtml) {
+      return res.redirect(`/admin?backup=1&backupemail=${emailSent ? '1' : '0'}`);
+    }
     return res.status(200).json({ backed_up: true, email_sent: emailSent });
   })
 );

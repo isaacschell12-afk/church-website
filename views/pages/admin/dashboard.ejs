@@ -1,6 +1,12 @@
 <section>
   <h1 class="page-title">Dashboard</h1>
 
+  <% if (query && query.backup === '1') { %>
+    <p class="flash flash-success">
+      Backup saved<%= query.backupemail === '1' ? ' and emailed' : ' (email failed — the backup is still stored in the database)' %>
+    </p>
+  <% } %>
+
   <div class="stat-grid">
     <div class="stat"><span class="stat-num"><%= counts.sermons %></span><span class="stat-label">Sermons</span></div>
     <div class="stat"><span class="stat-num"><%= counts.events %></span><span class="stat-label">Events</span></div>
@@ -8,6 +14,7 @@
     <div class="stat"><span class="stat-num"><%= counts.staff %></span><span class="stat-label">Staff</span></div>
     <div class="stat"><span class="stat-num"><%= counts.sundaySchool %></span><span class="stat-label">Sunday School</span></div>
     <div class="stat"><span class="stat-num"><%= counts.announcements %></span><span class="stat-label">Active Announcements</span></div>
+    <div class="stat"><span class="stat-num"><%= counts.unreadMessages %></span><span class="stat-label">Unread Messages</span></div>
   </div>
 
   <h2 class="section-title">Manage</h2>
@@ -18,9 +25,38 @@
     <a class="btn btn-navy" href="/admin/announcements">Announcements</a>
     <a class="btn btn-navy" href="/admin/staff">Staff</a>
     <a class="btn btn-navy" href="/admin/sunday-school">Sunday School</a>
+    <a class="btn btn-navy" href="/admin/messages">Messages<%= counts.unreadMessages ? ' (' + counts.unreadMessages + ')' : '' %></a>
     <% if (locals.user && user.role === 'superadmin') { %>
       <a class="btn btn-gold" href="/admin/church">Church Info</a>
       <a class="btn btn-gold" href="/admin/users">Users</a>
     <% } %>
   </div>
+
+  <% if (locals.user && user.role === 'superadmin') { %>
+    <hr class="rule" />
+    <h2 class="section-title">Backups</h2>
+    <form class="inline-form" method="POST" action="/admin/backup">
+      <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+      <button type="submit" class="btn btn-line-gold">Run backup now</button>
+    </form>
+
+    <% if (recentBackups && recentBackups.length) { %>
+      <table class="admin-table backup-table">
+        <thead>
+          <tr><th>Backup</th><th>Created</th><th>Emailed</th></tr>
+        </thead>
+        <tbody>
+          <% recentBackups.forEach(function (b) { %>
+            <tr>
+              <td data-label="Backup">#<%= b.id %></td>
+              <td data-label="Created"><%= new Date(b.created_at).toLocaleString('en-US') %></td>
+              <td data-label="Emailed"><%= b.email_sent ? 'Yes' : 'No' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p class="empty">No backups recorded yet.</p>
+    <% } %>
+  <% } %>
 </section>
