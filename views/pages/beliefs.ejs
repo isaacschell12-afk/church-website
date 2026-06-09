@@ -1,0 +1,8 @@
+<section>
+  <h1 class="page-title">What We Believe</h1>
+  <% if (church && church.statement_of_faith) { %>
+    <div class="prose prose-prewrap"><%= church.statement_of_faith %></div>
+  <% } else { %>
+    <p class="empty">Our statement of faith is coming soon.</p>
+  <% } %>
+</section>

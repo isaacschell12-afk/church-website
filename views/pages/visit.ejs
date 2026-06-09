@@ -1,0 +1,56 @@
+<section>
+  <h1 class="page-title">Plan a Visit</h1>
+
+  <% if (query && query.success) { %>
+    <p class="flash flash-success">Thank you — we're so glad you're coming. We'll be in touch soon.</p>
+  <% } %>
+  <% if (query && query.error) { %>
+    <p class="flash flash-error">Something went wrong — please email us directly at <%= church && church.email ? church.email : '' %></p>
+  <% } %>
+
+  <div class="contact-grid">
+    <div class="contact-info">
+      <% if (church && church.visit_info) { %>
+        <p class="prose prose-prewrap"><%= church.visit_info %></p>
+      <% } else { %>
+        <p class="empty">Visit details coming soon.</p>
+      <% } %>
+
+      <% if (church && church.service_times) { %>
+        <p><strong>Service Times</strong><br /><%= church.service_times %></p>
+      <% } %>
+      <% if (church && church.address) { %>
+        <p><strong>Where to find us</strong><br /><%= church.address %></p>
+      <% } %>
+    </div>
+
+    <div>
+      <h2 class="section-title">Let us know you're coming</h2>
+      <p>Tell us a little about yourself and we'll have someone ready to welcome you.</p>
+      <form class="contact-form" method="POST" action="/contact">
+        <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+        <input type="hidden" name="source" value="Planning a visit" />
+
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" maxlength="100" required />
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" maxlength="200" required />
+
+        <label for="message">Anything we should know? (optional details, kids' ages, questions)</label>
+        <textarea id="message" name="message" maxlength="2000" rows="5" required></textarea>
+
+        <!-- Honeypot: hidden from real users via CSS (.hp-field). Bots that fill it are rejected. -->
+        <input type="text" class="hp-field" name="website" tabindex="-1" autocomplete="off" />
+
+        <button type="submit" class="btn btn-navy">I'm Planning to Visit</button>
+      </form>
+    </div>
+  </div>
+
+  <% if (church && church.maps_embed_url) { %>
+    <div class="map-embed">
+      <iframe class="map-frame" src="<%= church.maps_embed_url %>" title="Map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  <% } %>
+</section>
