@@ -12,7 +12,7 @@
       <% ministries.forEach(function (m) { %>
         <div class="card">
           <div class="thumb skeleton">
-            <img class="thumb-img" loading="lazy" src="<%= m.image_url ? m.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= m.name %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+            <img class="thumb-img" loading="lazy" src="<%= m.image_url ? m.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= m.name %>" data-fallback="/images/church-logo-placeholder.png" />
           </div>
           <div class="card-body">
             <h3 class="card-title"><%= m.name %></h3>

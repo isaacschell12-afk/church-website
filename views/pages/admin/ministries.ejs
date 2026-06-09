@@ -15,9 +15,9 @@
       <tbody>
         <% rows.forEach(function (r) { %>
           <tr>
-            <td><%= r.name %></td>
-            <td><%= r.leader || '' %></td>
-            <td><%= r.contact_email || '' %></td>
+            <td data-label="Name"><%= r.name %></td>
+            <td data-label="Leader"><%= r.leader || '' %></td>
+            <td data-label="Contact"><%= r.contact_email || '' %></td>
             <td class="row-actions">
               <a class="btn btn-outline btn-sm" href="/admin/ministries/<%= r.id %>/edit">Edit</a>
               <a class="btn btn-danger btn-sm" href="/admin/ministries/<%= r.id %>/delete">Delete</a>

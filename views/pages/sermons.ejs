@@ -22,7 +22,7 @@
       <% sermons.forEach(function (s) { %>
         <a class="card sermon-card" href="/sermons/<%= s.id %>">
           <div class="thumb skeleton">
-            <img class="thumb-img" loading="lazy" src="https://img.youtube.com/vi/<%= s.youtube_id %>/hqdefault.jpg" alt="<%= s.title %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+            <img class="thumb-img" loading="lazy" src="https://img.youtube.com/vi/<%= s.youtube_id %>/hqdefault.jpg" alt="<%= s.title %>" data-fallback="/images/church-logo-placeholder.png" />
           </div>
           <div class="card-body">
             <h3 class="card-title"><%= s.title %></h3>

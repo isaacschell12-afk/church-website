@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -29,7 +30,16 @@ const optionalShort = (max) =>
     .optional()
     .transform((v) => (v == null || v.trim() === '' ? null : v));
 
-const dateField = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date');
+const dateField = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date')
+  .refine((v) => {
+    // Reject impossible dates (e.g. 2025-13-40) and year 0000 (no year zero in
+    // Postgres) so they fail validation instead of erroring in the database.
+    if (v.startsWith('0000')) return false;
+    const d = new Date(`${v}T00:00:00Z`);
+    return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+  }, 'Invalid date');
 const optionalTime = z
   .string()
   .regex(/^\d{2}:\d{2}(:\d{2})?$/)
@@ -49,6 +59,20 @@ function pageFrom(req) {
 
 function isoOrEmpty(value) {
   return value ? new Date(value).toISOString() : '';
+}
+
+// Parse the :id route param; returns null for non-numeric ids so handlers can
+// redirect instead of sending 'NaN' to Postgres (mirrors the public.js guard).
+function idFrom(req) {
+  const id = parseInt(req.params.id, 10);
+  return Number.isInteger(id) && id >= 1 ? id : null;
+}
+
+// pending_edits.id is a UUID column; a malformed token would make Postgres
+// throw a cast error (22P02), so validate the shape before querying.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function uuidOrNull(value) {
+  return typeof value === 'string' && UUID_RE.test(value) ? value : null;
 }
 
 // ── entity configs (sermons / events / ministries / announcements) ──────────
@@ -245,7 +269,8 @@ function registerEntity(name, cfg) {
     `${cfg.base}/:id/edit`,
     auth,
     catchAsync(async (req, res) => {
-      const id = parseInt(req.params.id, 10);
+      const id = idFrom(req);
+      if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
       const result = await pool.query(`SELECT * FROM ${cfg.table} WHERE id = $1`, [id]);
       if (result.rows.length === 0) {
         return res.redirect(`${cfg.base}?error=notfound`);
@@ -268,20 +293,35 @@ function registerEntity(name, cfg) {
     `${cfg.base}/:id`,
     auth,
     catchAsync(async (req, res) => {
-      const id = parseInt(req.params.id, 10);
+      const id = idFrom(req);
+      if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
       const parsed = cfg.parse(req.body);
       if (!parsed.success) {
         return res.redirect(`${cfg.base}/${id}/edit?error=1`);
       }
 
-      const current = await pool.query(`SELECT * FROM ${cfg.table} WHERE id = $1`, [id]);
-      if (current.rows.length === 0) {
-        return res.redirect(`${cfg.base}?error=notfound`);
+      // Atomic optimistic-concurrency check: the UPDATE only matches when the
+      // submitted last_modified still equals the stored value (millisecond
+      // precision, since the hidden form field comes from isoOrEmpty).
+      const submittedModified = new Date(req.body.last_modified || '');
+      let updated = { rowCount: 0 };
+      if (!isNaN(submittedModified.getTime())) {
+        const setClause = cfg.columns.map((c, i) => `${c} = $${i + 1}`).join(', ');
+        const values = valuesInColumnOrder(cfg, parsed.data);
+        values.push(id, submittedModified);
+        updated = await pool.query(
+          `UPDATE ${cfg.table} SET ${setClause}, last_modified = NOW()
+           WHERE id = $${values.length - 1}
+             AND date_trunc('milliseconds', last_modified) = $${values.length}`,
+          values
+        );
       }
-      const dbModified = isoOrEmpty(current.rows[0].last_modified);
-      const submittedModified = req.body.last_modified || '';
 
-      if (submittedModified !== dbModified) {
+      if (updated.rowCount === 0) {
+        const current = await pool.query(`SELECT id FROM ${cfg.table} WHERE id = $1`, [id]);
+        if (current.rows.length === 0) {
+          return res.redirect(`${cfg.base}?error=notfound`);
+        }
         // Stash the submitted edit and send the user to the conflict screen.
         const pending = await pool.query(
           `INSERT INTO pending_edits (table_name, record_id, submitted_data)
@@ -290,14 +330,6 @@ function registerEntity(name, cfg) {
         );
         return res.redirect(`${cfg.base}/${id}/conflict?token=${pending.rows[0].id}`);
       }
-
-      const setClause = cfg.columns.map((c, i) => `${c} = $${i + 1}`).join(', ');
-      const values = valuesInColumnOrder(cfg, parsed.data);
-      values.push(id);
-      await pool.query(
-        `UPDATE ${cfg.table} SET ${setClause}, last_modified = NOW() WHERE id = $${values.length}`,
-        values
-      );
       return res.redirect(`${cfg.base}?success=1`);
     })
   );
@@ -307,8 +339,10 @@ function registerEntity(name, cfg) {
     `${cfg.base}/:id/conflict`,
     auth,
     catchAsync(async (req, res) => {
-      const id = parseInt(req.params.id, 10);
-      const token = req.query.token;
+      const id = idFrom(req);
+      if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
+      const token = uuidOrNull(req.query.token);
+      if (!token) return res.redirect(`${cfg.base}?error=conflictexpired`);
       const pending = await pool.query(
         `SELECT * FROM pending_edits WHERE id = $1 AND table_name = $2 AND record_id = $3`,
         [token, cfg.table, id]
@@ -340,7 +374,8 @@ function registerEntity(name, cfg) {
     `${cfg.base}/:id/conflict/keep`,
     auth,
     catchAsync(async (req, res) => {
-      const token = req.body.token || req.query.token;
+      const token = uuidOrNull(req.body.token || req.query.token);
+      if (!token) return res.redirect(`${cfg.base}?error=conflictexpired`);
       await pool.query('DELETE FROM pending_edits WHERE id = $1', [token]);
       return res.redirect(`${cfg.base}?success=1`);
     })
@@ -351,8 +386,10 @@ function registerEntity(name, cfg) {
     `${cfg.base}/:id/conflict/save`,
     auth,
     catchAsync(async (req, res) => {
-      const id = parseInt(req.params.id, 10);
-      const token = req.body.token || req.query.token;
+      const id = idFrom(req);
+      if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
+      const token = uuidOrNull(req.body.token || req.query.token);
+      if (!token) return res.redirect(`${cfg.base}?error=conflictexpired`);
       const pending = await pool.query(
         `SELECT * FROM pending_edits WHERE id = $1 AND table_name = $2 AND record_id = $3`,
         [token, cfg.table, id]
@@ -378,7 +415,8 @@ function registerEntity(name, cfg) {
     `${cfg.base}/:id/delete`,
     auth,
     catchAsync(async (req, res) => {
-      const id = parseInt(req.params.id, 10);
+      const id = idFrom(req);
+      if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
       const result = await pool.query(`SELECT * FROM ${cfg.table} WHERE id = $1`, [id]);
       if (result.rows.length === 0) {
         return res.redirect(`${cfg.base}?error=notfound`);
@@ -399,7 +437,8 @@ function registerEntity(name, cfg) {
     `${cfg.base}/:id/delete-confirm`,
     auth,
     catchAsync(async (req, res) => {
-      const id = parseInt(req.params.id, 10);
+      const id = idFrom(req);
+      if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
       await pool.query(`DELETE FROM ${cfg.table} WHERE id = $1`, [id]);
       return res.redirect(`${cfg.base}?success=1`);
     })
@@ -493,13 +532,12 @@ router.post(
       return res.redirect('/admin/staff/new?error=1');
     }
     const { name, title, bio, image_url } = parsed.data;
-    // New staff go to the bottom of the list.
-    const max = await pool.query('SELECT COALESCE(MAX(display_order), 0) AS m FROM staff');
-    const nextOrder = Number(max.rows[0].m) + 10;
+    // New staff go to the bottom of the list. Compute the order inside the
+    // INSERT so concurrent creates cannot read the same MAX.
     await pool.query(
       `INSERT INTO staff (name, title, bio, image_url, display_order, created_at, last_modified)
-       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
-      [name, title, bio, image_url, nextOrder]
+       SELECT $1, $2, $3, $4, COALESCE(MAX(display_order), 0) + 10, NOW(), NOW() FROM staff`,
+      [name, title, bio, image_url]
     );
     return res.redirect('/admin/staff?success=1');
   })
@@ -509,7 +547,8 @@ router.get(
   '/admin/staff/:id/edit',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/staff?error=notfound');
     const result = await pool.query('SELECT * FROM staff WHERE id = $1', [id]);
     if (result.rows.length === 0) return res.redirect('/admin/staff?error=notfound');
     const record = result.rows[0];
@@ -528,15 +567,27 @@ router.post(
   '/admin/staff/:id',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/staff?error=notfound');
     const parsed = parseStaff(req.body);
     if (!parsed.success) return res.redirect(`/admin/staff/${id}/edit?error=1`);
 
-    const current = await pool.query('SELECT * FROM staff WHERE id = $1', [id]);
-    if (current.rows.length === 0) return res.redirect('/admin/staff?error=notfound');
+    // Atomic optimistic-concurrency check: the UPDATE only matches when the
+    // submitted last_modified still equals the stored value (ms precision).
+    const { name, title, bio, image_url } = parsed.data;
+    const submittedModified = new Date(req.body.last_modified || '');
+    let updated = { rowCount: 0 };
+    if (!isNaN(submittedModified.getTime())) {
+      updated = await pool.query(
+        `UPDATE staff SET name = $1, title = $2, bio = $3, image_url = $4, last_modified = NOW()
+         WHERE id = $5 AND date_trunc('milliseconds', last_modified) = $6`,
+        [name, title, bio, image_url, id, submittedModified]
+      );
+    }
 
-    const dbModified = isoOrEmpty(current.rows[0].last_modified);
-    if ((req.body.last_modified || '') !== dbModified) {
+    if (updated.rowCount === 0) {
+      const current = await pool.query('SELECT id FROM staff WHERE id = $1', [id]);
+      if (current.rows.length === 0) return res.redirect('/admin/staff?error=notfound');
       const pending = await pool.query(
         `INSERT INTO pending_edits (table_name, record_id, submitted_data)
          VALUES ($1, $2, $3) RETURNING id`,
@@ -544,13 +595,6 @@ router.post(
       );
       return res.redirect(`/admin/staff/${id}/conflict?token=${pending.rows[0].id}`);
     }
-
-    const { name, title, bio, image_url } = parsed.data;
-    await pool.query(
-      `UPDATE staff SET name = $1, title = $2, bio = $3, image_url = $4, last_modified = NOW()
-       WHERE id = $5`,
-      [name, title, bio, image_url, id]
-    );
     return res.redirect('/admin/staff?success=1');
   })
 );
@@ -559,8 +603,10 @@ router.get(
   '/admin/staff/:id/conflict',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    const token = req.query.token;
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/staff?error=notfound');
+    const token = uuidOrNull(req.query.token);
+    if (!token) return res.redirect('/admin/staff?error=conflictexpired');
     const pending = await pool.query(
       `SELECT * FROM pending_edits WHERE id = $1 AND table_name = 'staff' AND record_id = $2`,
       [token, id]
@@ -587,7 +633,9 @@ router.post(
   '/admin/staff/:id/conflict/keep',
   auth,
   catchAsync(async (req, res) => {
-    await pool.query('DELETE FROM pending_edits WHERE id = $1', [req.body.token || req.query.token]);
+    const token = uuidOrNull(req.body.token || req.query.token);
+    if (!token) return res.redirect('/admin/staff?error=conflictexpired');
+    await pool.query('DELETE FROM pending_edits WHERE id = $1', [token]);
     return res.redirect('/admin/staff?success=1');
   })
 );
@@ -596,8 +644,10 @@ router.post(
   '/admin/staff/:id/conflict/save',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    const token = req.body.token || req.query.token;
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/staff?error=notfound');
+    const token = uuidOrNull(req.body.token || req.query.token);
+    if (!token) return res.redirect('/admin/staff?error=conflictexpired');
     const pending = await pool.query(
       `SELECT * FROM pending_edits WHERE id = $1 AND table_name = 'staff' AND record_id = $2`,
       [token, id]
@@ -618,7 +668,8 @@ router.get(
   '/admin/staff/:id/delete',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/staff?error=notfound');
     const result = await pool.query('SELECT * FROM staff WHERE id = $1', [id]);
     if (result.rows.length === 0) return res.redirect('/admin/staff?error=notfound');
     res.render('layouts/main', {
@@ -636,7 +687,9 @@ router.post(
   '/admin/staff/:id/delete-confirm',
   auth,
   catchAsync(async (req, res) => {
-    await pool.query('DELETE FROM staff WHERE id = $1', [parseInt(req.params.id, 10)]);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/staff?error=notfound');
+    await pool.query('DELETE FROM staff WHERE id = $1', [id]);
     return res.redirect('/admin/staff?success=1');
   })
 );
@@ -646,7 +699,8 @@ router.post(
   '/admin/staff/:id/move',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/staff?error=notfound');
     const direction = req.body.direction;
     if (direction !== 'up' && direction !== 'down') {
       return res.status(400).render('layouts/main', {
@@ -785,16 +839,14 @@ router.post(
       return res.redirect('/admin/sunday-school/new?error=1');
     }
     const { name, age_group, location, teacher, description } = parsed.data;
-    // New classes go to the bottom of the list.
-    const max = await pool.query(
-      'SELECT COALESCE(MAX(display_order), 0) AS m FROM sunday_school_classes'
-    );
-    const nextOrder = Number(max.rows[0].m) + 10;
+    // New classes go to the bottom of the list. Compute the order inside the
+    // INSERT so concurrent creates cannot read the same MAX.
     await pool.query(
       `INSERT INTO sunday_school_classes
          (name, age_group, location, teacher, description, display_order, created_at, last_modified)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`,
-      [name, age_group, location, teacher, description, nextOrder]
+       SELECT $1, $2, $3, $4, $5, COALESCE(MAX(display_order), 0) + 10, NOW(), NOW()
+       FROM sunday_school_classes`,
+      [name, age_group, location, teacher, description]
     );
     return res.redirect('/admin/sunday-school?success=1');
   })
@@ -804,7 +856,8 @@ router.get(
   '/admin/sunday-school/:id/edit',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/sunday-school?error=notfound');
     const result = await pool.query('SELECT * FROM sunday_school_classes WHERE id = $1', [id]);
     if (result.rows.length === 0) return res.redirect('/admin/sunday-school?error=notfound');
     const record = result.rows[0];
@@ -823,15 +876,29 @@ router.post(
   '/admin/sunday-school/:id',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/sunday-school?error=notfound');
     const parsed = parseSundaySchool(req.body);
     if (!parsed.success) return res.redirect(`/admin/sunday-school/${id}/edit?error=1`);
 
-    const current = await pool.query('SELECT * FROM sunday_school_classes WHERE id = $1', [id]);
-    if (current.rows.length === 0) return res.redirect('/admin/sunday-school?error=notfound');
+    // Atomic optimistic-concurrency check: the UPDATE only matches when the
+    // submitted last_modified still equals the stored value (ms precision).
+    const { name, age_group, location, teacher, description } = parsed.data;
+    const submittedModified = new Date(req.body.last_modified || '');
+    let updated = { rowCount: 0 };
+    if (!isNaN(submittedModified.getTime())) {
+      updated = await pool.query(
+        `UPDATE sunday_school_classes
+           SET name = $1, age_group = $2, location = $3, teacher = $4, description = $5,
+               last_modified = NOW()
+         WHERE id = $6 AND date_trunc('milliseconds', last_modified) = $7`,
+        [name, age_group, location, teacher, description, id, submittedModified]
+      );
+    }
 
-    const dbModified = isoOrEmpty(current.rows[0].last_modified);
-    if ((req.body.last_modified || '') !== dbModified) {
+    if (updated.rowCount === 0) {
+      const current = await pool.query('SELECT id FROM sunday_school_classes WHERE id = $1', [id]);
+      if (current.rows.length === 0) return res.redirect('/admin/sunday-school?error=notfound');
       const pending = await pool.query(
         `INSERT INTO pending_edits (table_name, record_id, submitted_data)
          VALUES ($1, $2, $3) RETURNING id`,
@@ -839,15 +906,6 @@ router.post(
       );
       return res.redirect(`/admin/sunday-school/${id}/conflict?token=${pending.rows[0].id}`);
     }
-
-    const { name, age_group, location, teacher, description } = parsed.data;
-    await pool.query(
-      `UPDATE sunday_school_classes
-         SET name = $1, age_group = $2, location = $3, teacher = $4, description = $5,
-             last_modified = NOW()
-       WHERE id = $6`,
-      [name, age_group, location, teacher, description, id]
-    );
     return res.redirect('/admin/sunday-school?success=1');
   })
 );
@@ -856,8 +914,10 @@ router.get(
   '/admin/sunday-school/:id/conflict',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    const token = req.query.token;
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/sunday-school?error=notfound');
+    const token = uuidOrNull(req.query.token);
+    if (!token) return res.redirect('/admin/sunday-school?error=conflictexpired');
     const pending = await pool.query(
       `SELECT * FROM pending_edits WHERE id = $1 AND table_name = 'sunday_school_classes' AND record_id = $2`,
       [token, id]
@@ -884,7 +944,9 @@ router.post(
   '/admin/sunday-school/:id/conflict/keep',
   auth,
   catchAsync(async (req, res) => {
-    await pool.query('DELETE FROM pending_edits WHERE id = $1', [req.body.token || req.query.token]);
+    const token = uuidOrNull(req.body.token || req.query.token);
+    if (!token) return res.redirect('/admin/sunday-school?error=conflictexpired');
+    await pool.query('DELETE FROM pending_edits WHERE id = $1', [token]);
     return res.redirect('/admin/sunday-school?success=1');
   })
 );
@@ -893,8 +955,10 @@ router.post(
   '/admin/sunday-school/:id/conflict/save',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
-    const token = req.body.token || req.query.token;
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/sunday-school?error=notfound');
+    const token = uuidOrNull(req.body.token || req.query.token);
+    if (!token) return res.redirect('/admin/sunday-school?error=conflictexpired');
     const pending = await pool.query(
       `SELECT * FROM pending_edits WHERE id = $1 AND table_name = 'sunday_school_classes' AND record_id = $2`,
       [token, id]
@@ -917,7 +981,8 @@ router.get(
   '/admin/sunday-school/:id/delete',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/sunday-school?error=notfound');
     const result = await pool.query('SELECT * FROM sunday_school_classes WHERE id = $1', [id]);
     if (result.rows.length === 0) return res.redirect('/admin/sunday-school?error=notfound');
     res.render('layouts/main', {
@@ -935,7 +1000,9 @@ router.post(
   '/admin/sunday-school/:id/delete-confirm',
   auth,
   catchAsync(async (req, res) => {
-    await pool.query('DELETE FROM sunday_school_classes WHERE id = $1', [parseInt(req.params.id, 10)]);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/sunday-school?error=notfound');
+    await pool.query('DELETE FROM sunday_school_classes WHERE id = $1', [id]);
     return res.redirect('/admin/sunday-school?success=1');
   })
 );
@@ -945,7 +1012,8 @@ router.post(
   '/admin/sunday-school/:id/move',
   auth,
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/sunday-school?error=notfound');
     const direction = req.body.direction;
     if (direction !== 'up' && direction !== 'down') {
       return res.status(400).render('layouts/main', {
@@ -1057,7 +1125,9 @@ router.post(
         .optional()
         .transform((v) => v || null),
       service_times: z.string().max(5000).optional().transform((v) => v || null),
-      timezone: z.string().max(100),
+      // Restrict to the known-good list: an invalid timezone would make the
+      // public pages' NOW() AT TIME ZONE queries error site-wide.
+      timezone: z.enum(US_TIMEZONES),
       maps_embed_url: z
         .string()
         .max(5000)
@@ -1067,9 +1137,25 @@ router.post(
           (v) => v === '' || (v.startsWith('https') && v.includes('google.com/maps')),
           { message: 'maps_embed_url must be https and contain google.com/maps' }
         ),
-      giving_embed_url: z.string().max(5000).optional().transform((v) => v || null),
+      giving_embed_url: z
+        .string()
+        .max(5000)
+        .optional()
+        .transform((v) => v || null)
+        .refine(
+          (v) => {
+            if (v === null) return true;
+            try {
+              const u = new URL(v);
+              return u.protocol === 'https:' && /(^|\.)(pushpay\.com|tithe\.ly)$/.test(u.hostname);
+            } catch {
+              return false;
+            }
+          },
+          { message: 'giving_embed_url must be an https URL on pushpay.com or tithe.ly' }
+        ),
       give_intro: z.string().max(20000).optional().transform((v) => v || null),
-      hero_cta_label: z.string().max(50).optional().transform((v) => v || 'Watch Latest Sermon'),
+      hero_cta_label: z.string().max(50).optional().transform((v) => v || 'Plan Your Visit'),
       logo_url: z.string().max(2000).optional().transform((v) => v || null),
       favicon_url: z.string().max(2000).optional().transform((v) => v || null),
       // TMPC additions
@@ -1184,7 +1270,8 @@ router.post(
   auth,
   requireRole('superadmin'),
   catchAsync(async (req, res) => {
-    const id = parseInt(req.params.id, 10);
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/users?error=notfound');
     const target = await pool.query('SELECT id, role FROM admins WHERE id = $1', [id]);
     if (target.rows.length === 0) {
       return res.redirect('/admin/users?error=notfound');
@@ -1203,11 +1290,19 @@ router.post(
 );
 
 // ── BACKUP (superadmin cookie OR Bearer BACKUP_SECRET) ──────────────────────
+// Constant-time string comparison. Hashing both sides first yields equal-length
+// buffers so crypto.timingSafeEqual can be used regardless of input lengths.
+function timingSafeStringEqual(a, b) {
+  const hashA = crypto.createHash('sha256').update(a).digest();
+  const hashB = crypto.createHash('sha256').update(b).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
 async function authorizeBackup(req) {
   const header = req.headers['authorization'] || '';
   if (header.startsWith('Bearer ')) {
     const token = header.slice('Bearer '.length).trim();
-    if (process.env.BACKUP_SECRET && token === process.env.BACKUP_SECRET) {
+    if (process.env.BACKUP_SECRET && timingSafeStringEqual(token, process.env.BACKUP_SECRET)) {
       return true;
     }
   }
@@ -1215,7 +1310,21 @@ async function authorizeBackup(req) {
   if (cookie) {
     try {
       const payload = jwt.verify(cookie, process.env.JWT_SECRET);
-      if (payload.role === 'superadmin') return true;
+      // Don't trust the role baked into the token — confirm against the DB
+      // that the admin still exists, is still superadmin, and the token has
+      // not been revoked (token_version mismatch).
+      const result = await pool.query(
+        'SELECT role, token_version FROM admins WHERE id = $1',
+        [payload.id]
+      );
+      const admin = result.rows[0];
+      if (
+        admin &&
+        admin.role === 'superadmin' &&
+        payload.token_version === admin.token_version
+      ) {
+        return true;
+      }
     } catch (err) {
       /* fall through */
     }
@@ -1230,14 +1339,16 @@ router.post(
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const [services, events, ministries, staff, announcements, churchInfo] = await Promise.all([
-      pool.query('SELECT * FROM services'),
-      pool.query('SELECT * FROM events'),
-      pool.query('SELECT * FROM ministries'),
-      pool.query('SELECT * FROM staff'),
-      pool.query('SELECT * FROM announcements'),
-      pool.query('SELECT * FROM church_info'),
-    ]);
+    const [services, events, ministries, staff, sundaySchool, announcements, churchInfo] =
+      await Promise.all([
+        pool.query('SELECT * FROM services'),
+        pool.query('SELECT * FROM events'),
+        pool.query('SELECT * FROM ministries'),
+        pool.query('SELECT * FROM staff'),
+        pool.query('SELECT * FROM sunday_school_classes'),
+        pool.query('SELECT * FROM announcements'),
+        pool.query('SELECT * FROM church_info'),
+      ]);
 
     const payload = {
       generated_at: new Date().toISOString(),
@@ -1245,6 +1356,7 @@ router.post(
       events: events.rows,
       ministries: ministries.rows,
       staff: staff.rows,
+      sunday_school_classes: sundaySchool.rows,
       announcements: announcements.rows,
       church_info: churchInfo.rows,
     };
@@ -1260,7 +1372,9 @@ router.post(
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const json = JSON.stringify(payload, null, 2);
-      await resend.emails.send({
+      // Resend resolves with { data, error } instead of throwing on API
+      // failures, so check the error explicitly before marking the email sent.
+      const { error } = await resend.emails.send({
         from: `Church Backup <${process.env.CHURCH_CONTACT_EMAIL}>`,
         to: process.env.BACKUP_EMAIL,
         subject: `Church website backup — ${payload.generated_at}`,
@@ -1272,6 +1386,7 @@ router.post(
           },
         ],
       });
+      if (error) throw error;
       emailSent = true;
       await pool.query('UPDATE backups SET email_sent = true WHERE id = $1', [backupId]);
     } catch (err) {

@@ -6,6 +6,7 @@ const { rateLimit } = require('express-rate-limit');
 const FileType = require('file-type');
 const cloudinary = require('cloudinary').v2;
 const auth = require('../middleware/auth');
+const catchAsync = require('../middleware/catchAsync');
 
 const router = express.Router();
 
@@ -49,7 +50,7 @@ function uploadToCloudinary(buffer) {
 }
 
 // POST /admin/upload
-router.post('/admin/upload', auth, uploadLimiter, async (req, res) => {
+router.post('/admin/upload', auth, uploadLimiter, catchAsync(async (req, res) => {
   try {
     await runMulter(req, res);
   } catch (err) {
@@ -61,7 +62,13 @@ router.post('/admin/upload', auth, uploadLimiter, async (req, res) => {
     return res.status(400).json({ error: 'No file provided' });
   }
 
-  const detected = await FileType.fromBuffer(req.file.buffer);
+  let detected;
+  try {
+    detected = await FileType.fromBuffer(req.file.buffer);
+  } catch (err) {
+    // Corrupt/truncated input can make file-type reject; treat as unrecognized.
+    detected = undefined;
+  }
   if (!detected || !ALLOWED_MIME.includes(detected.mime)) {
     return res
       .status(400)
@@ -78,6 +85,6 @@ router.post('/admin/upload', auth, uploadLimiter, async (req, res) => {
     );
     return res.status(500).json({ error: 'Upload failed — please try again' });
   }
-});
+}));
 
 module.exports = router;

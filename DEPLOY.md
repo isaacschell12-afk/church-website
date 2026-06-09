@@ -34,6 +34,7 @@ Railway automatically — do not set it. Generate secrets with the commands show
 | --- | --- |
 | `DATABASE_URL` | `${{ Postgres.DATABASE_URL }}` (Railway reference) |
 | `JWT_SECRET` | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `CSRF_SECRET` | Same generator — must differ from `JWT_SECRET` |
 | `BACKUP_SECRET` | `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
 | `BACKUP_EMAIL` | Where weekly JSON backups are emailed |
 | `CHURCH_CONTACT_EMAIL` | Where the public contact form delivers messages |

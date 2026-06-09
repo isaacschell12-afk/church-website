@@ -14,9 +14,9 @@
     <tbody>
       <% users.forEach(function (u) { %>
         <tr>
-          <td><%= u.username %></td>
-          <td><%= u.role %></td>
-          <td><%= u.created_at ? new Date(u.created_at).toISOString().slice(0,10) : '' %></td>
+          <td data-label="Username"><%= u.username %></td>
+          <td data-label="Role"><%= u.role %></td>
+          <td data-label="Created"><%= u.created_at ? new Date(u.created_at).toISOString().slice(0,10) : '' %></td>
           <td class="row-actions">
             <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/delete">
               <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
