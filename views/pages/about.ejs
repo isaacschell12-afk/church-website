@@ -1,22 +1,32 @@
-<section>
+<section class="reveal">
+  <p class="eyebrow">Who We Are</p>
   <h1 class="page-title">About Us</h1>
   <% if (church && church.about) { %>
-    <p class="prose"><%= church.about %></p>
+    <p class="lede"><%= church.about %></p>
   <% } %>
-  <% if (church && church.mission_statement) { %>
-    <h2 class="section-title">Our Mission</h2>
-    <p class="prose"><%= church.mission_statement %></p>
-  <% } %>
-  <p><a class="btn btn-outline" href="/beliefs">What We Believe</a></p>
+  <p><a class="btn btn-line-gold" href="/beliefs">What We Believe</a></p>
 </section>
 
-<section>
-  <h2 class="section-title">Our Team</h2>
+<% if (church && church.mission_statement) { %>
+  <section class="band-navy reveal">
+    <p class="eyebrow">Our Mission</p>
+    <h2 class="section-title">Our Mission</h2>
+    <p class="prose prose-prewrap"><%= church.mission_statement %></p>
+  </section>
+<% } %>
+
+<section class="reveal">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">The People</p>
+      <h2 class="section-title">Our Team</h2>
+    </div>
+  </div>
   <% if (staff && staff.length) { %>
-    <div class="card-grid">
+    <div class="card-grid reveal-group">
       <% staff.forEach(function (member) { %>
-        <div class="card staff-card">
-          <div class="thumb skeleton thumb-portrait">
+        <div class="card">
+          <div class="thumb thumb-portrait skeleton">
             <img class="thumb-img" loading="lazy" src="<%= member.image_url ? member.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= member.name %>" onerror="this.src='/images/church-logo-placeholder.png'" />
           </div>
           <div class="card-body">

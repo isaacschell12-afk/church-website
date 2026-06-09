@@ -1,11 +1,12 @@
-<section>
-  <a class="btn btn-outline back-link" href="/sermons">&larr; Back to sermons</a>
+<section class="reveal">
+  <a class="content-link" href="/sermons">&larr; Back to sermons</a>
 
+  <p class="eyebrow">Sermon</p>
   <h1 class="page-title"><%= sermon.title %></h1>
-  <p class="card-meta"><%= sermon.pastor %> · <%= fmtDate(sermon.date) %></p>
+  <p class="sermon-detail__meta"><%= sermon.pastor %> <span class="dot">&middot;</span> <%= fmtDate(sermon.date) %></p>
 
   <div class="video-wrap">
-    <p class="video-fallback">This video is temporarily unavailable — please check back soon</p>
+    <p class="video-fallback">This video is temporarily unavailable &mdash; please check back soon</p>
     <iframe
       class="video-frame"
       src="https://www.youtube-nocookie.com/embed/<%= sermon.youtube_id %>"
@@ -16,6 +17,6 @@
   </div>
 
   <% if (sermon.description) { %>
-    <div class="prose sermon-description"><%= sermon.description %></div>
+    <div class="prose prose-prewrap"><%= sermon.description %></div>
   <% } %>
 </section>
