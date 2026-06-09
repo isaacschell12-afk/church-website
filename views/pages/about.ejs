@@ -9,9 +9,13 @@
 
 <% if (church && church.mission_statement) { %>
   <section class="band band-navy reveal">
-    <p class="eyebrow">Our Mission</p>
-    <h2 class="section-title">Our Mission</h2>
-    <p class="prose prose-prewrap"><%= church.mission_statement %></p>
+    <div class="band-cols">
+      <div>
+        <p class="eyebrow">Who we are</p>
+        <h2 class="section-title">Our Mission</h2>
+      </div>
+      <p class="prose prose-prewrap"><%= church.mission_statement %></p>
+    </div>
   </section>
 <% } %>
 
