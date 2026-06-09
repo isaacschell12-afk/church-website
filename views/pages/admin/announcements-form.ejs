@@ -1,0 +1,27 @@
+<section>
+  <a class="btn btn-outline back-link" href="/admin/announcements">&larr; Back to announcements</a>
+  <h1 class="page-title"><%= mode === 'edit' ? 'Edit Announcement' : 'New Announcement' %></h1>
+
+  <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
+
+  <form class="admin-form" method="POST" action="<%= mode === 'edit' ? '/admin/announcements/' + record.id : '/admin/announcements' %>">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+    <% if (mode === 'edit') { %>
+      <input type="hidden" name="last_modified" value="<%= record.last_modified || '' %>" />
+    <% } %>
+
+    <label for="message">Message</label>
+    <textarea id="message" name="message" rows="4" maxlength="500" required><%= record.message || '' %></textarea>
+
+    <label class="checkbox-row">
+      <input type="checkbox" name="active" <%= record.active ? 'checked' : '' %> />
+      <span>Active (show on the site)</span>
+    </label>
+
+    <label for="expiry_utc">Expiry (UTC)</label>
+    <input type="datetime-local" id="expiry_utc" name="expiry_utc" value="<%= record.expiry_utc ? new Date(record.expiry_utc).toISOString().slice(0,16) : '' %>" />
+    <p class="field-note">Leave blank for no expiry. Time is interpreted as UTC.</p>
+
+    <button type="submit" class="btn btn-navy">Save</button>
+  </form>
+</section>

@@ -1,0 +1,35 @@
+<section>
+  <a class="btn btn-outline back-link" href="/admin/ministries">&larr; Back to ministries</a>
+  <h1 class="page-title"><%= mode === 'edit' ? 'Edit Ministry' : 'New Ministry' %></h1>
+
+  <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
+
+  <form class="admin-form" method="POST" action="<%= mode === 'edit' ? '/admin/ministries/' + record.id : '/admin/ministries' %>">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+    <% if (mode === 'edit') { %>
+      <input type="hidden" name="last_modified" value="<%= record.last_modified || '' %>" />
+    <% } %>
+
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" maxlength="200" value="<%= record.name || '' %>" required />
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="6"><%= record.description || '' %></textarea>
+
+    <label for="leader">Leader</label>
+    <input type="text" id="leader" name="leader" maxlength="100" value="<%= record.leader || '' %>" />
+
+    <label for="contact_email">Contact Email</label>
+    <input type="email" id="contact_email" name="contact_email" maxlength="200" value="<%= record.contact_email || '' %>" />
+
+    <label for="image_url">Image</label>
+    <input type="text" id="image_url" name="image_url" value="<%= record.image_url || '' %>" />
+    <div class="upload-controls" data-upload-for="image_url">
+      <input type="file" class="upload-file" accept="image/*" data-upload-input />
+      <button type="button" class="btn btn-outline" data-upload-button>Upload Image</button>
+      <span class="upload-status" data-upload-status></span>
+    </div>
+
+    <button type="submit" class="btn btn-navy">Save</button>
+  </form>
+</section>

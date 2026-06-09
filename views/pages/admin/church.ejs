@@ -1,0 +1,72 @@
+<section>
+  <h1 class="page-title">Church Info</h1>
+
+  <% if (query && query.success) { %><p class="flash flash-success">Saved successfully</p><% } %>
+  <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
+
+  <form class="admin-form" method="POST" action="/admin/church">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+
+    <label for="church_name">Church Name</label>
+    <input type="text" id="church_name" name="church_name" maxlength="200" value="<%= church_info.church_name || '' %>" />
+
+    <label for="tagline">Tagline</label>
+    <input type="text" id="tagline" name="tagline" maxlength="200" value="<%= church_info.tagline || '' %>" />
+
+    <label for="about">About</label>
+    <textarea id="about" name="about" rows="6"><%= church_info.about || '' %></textarea>
+
+    <label for="mission_statement">Mission Statement</label>
+    <textarea id="mission_statement" name="mission_statement" rows="4"><%= church_info.mission_statement || '' %></textarea>
+
+    <label for="address">Address</label>
+    <textarea id="address" name="address" rows="2"><%= church_info.address || '' %></textarea>
+
+    <label for="phone">Phone</label>
+    <input type="text" id="phone" name="phone" maxlength="50" value="<%= church_info.phone || '' %>" />
+
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" maxlength="200" value="<%= church_info.email || '' %>" />
+
+    <label for="service_times">Service Times</label>
+    <textarea id="service_times" name="service_times" rows="3"><%= church_info.service_times || '' %></textarea>
+
+    <label for="timezone">Timezone</label>
+    <select id="timezone" name="timezone">
+      <% timezones.forEach(function (tz) { %>
+        <option value="<%= tz %>" <%= church_info.timezone === tz ? 'selected' : '' %>><%= tz %></option>
+      <% }) %>
+    </select>
+
+    <label for="maps_embed_url">Google Maps Embed URL</label>
+    <input type="text" id="maps_embed_url" name="maps_embed_url" value="<%= church_info.maps_embed_url || '' %>" />
+    <p class="field-note">Must start with https and contain google.com/maps</p>
+
+    <label for="giving_embed_url">Giving Embed URL</label>
+    <input type="text" id="giving_embed_url" name="giving_embed_url" value="<%= church_info.giving_embed_url || '' %>" />
+
+    <label for="give_intro">Giving Intro</label>
+    <textarea id="give_intro" name="give_intro" rows="3"><%= church_info.give_intro || '' %></textarea>
+
+    <label for="hero_cta_label">Hero Button Label</label>
+    <input type="text" id="hero_cta_label" name="hero_cta_label" maxlength="50" value="<%= church_info.hero_cta_label || '' %>" />
+
+    <label for="logo_url">Logo</label>
+    <input type="text" id="logo_url" name="logo_url" value="<%= church_info.logo_url || '' %>" />
+    <div class="upload-controls" data-upload-for="logo_url">
+      <input type="file" class="upload-file" accept="image/*" data-upload-input />
+      <button type="button" class="btn btn-outline" data-upload-button>Upload Logo</button>
+      <span class="upload-status" data-upload-status></span>
+    </div>
+
+    <label for="favicon_url">Favicon</label>
+    <input type="text" id="favicon_url" name="favicon_url" value="<%= church_info.favicon_url || '' %>" />
+    <div class="upload-controls" data-upload-for="favicon_url">
+      <input type="file" class="upload-file" accept="image/*" data-upload-input />
+      <button type="button" class="btn btn-outline" data-upload-button>Upload Favicon</button>
+      <span class="upload-status" data-upload-status></span>
+    </div>
+
+    <button type="submit" class="btn btn-navy">Save</button>
+  </form>
+</section>

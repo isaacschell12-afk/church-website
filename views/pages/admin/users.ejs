@@ -1,0 +1,51 @@
+<section>
+  <h1 class="page-title">Users</h1>
+
+  <% if (query && query.success) { %><p class="flash flash-success">Saved successfully</p><% } %>
+  <% if (query && query.error === 'duplicate') { %><p class="flash flash-error">That username is already taken</p><% } %>
+  <% if (query && query.error === 'invalid') { %><p class="flash flash-error">Username must be alphanumeric/underscore and password at least 12 characters</p><% } %>
+  <% if (query && query.error === 'lastsuperadmin') { %><p class="flash flash-error">You cannot delete the last superadmin</p><% } %>
+  <% if (query && query.error === 'notfound') { %><p class="flash flash-error">That user no longer exists</p><% } %>
+
+  <table class="admin-table">
+    <thead>
+      <tr><th>Username</th><th>Role</th><th>Created</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      <% users.forEach(function (u) { %>
+        <tr>
+          <td><%= u.username %></td>
+          <td><%= u.role %></td>
+          <td><%= u.created_at ? new Date(u.created_at).toISOString().slice(0,10) : '' %></td>
+          <td class="row-actions">
+            <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/delete">
+              <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <h2 class="section-title">Add New User</h2>
+  <form class="admin-form" method="POST" action="/admin/users">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" maxlength="50" pattern="[a-zA-Z0-9_]+" required />
+    <p class="field-note">Letters, numbers, and underscores only.</p>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" minlength="12" autocomplete="new-password" required />
+    <p class="field-note">Minimum 12 characters.</p>
+
+    <label for="role">Role</label>
+    <select id="role" name="role">
+      <option value="editor">editor</option>
+      <option value="superadmin">superadmin</option>
+    </select>
+
+    <button type="submit" class="btn btn-navy">Create User</button>
+  </form>
+</section>

@@ -1,0 +1,80 @@
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title"><%= church && church.church_name ? church.church_name : 'Welcome' %></h1>
+    <% if (church && church.tagline) { %>
+      <p class="hero-tagline"><%= church.tagline %></p>
+    <% } %>
+    <div class="hero-actions">
+      <a class="btn btn-gold" href="/sermons"><%= church && church.hero_cta_label ? church.hero_cta_label : 'Watch Latest Sermon' %></a>
+      <a class="btn btn-outline" href="/give">Give</a>
+    </div>
+  </div>
+</section>
+
+<% if (announcements && announcements.length) { %>
+  <section class="announcements" aria-label="Announcements">
+    <% announcements.forEach(function (a) { %>
+      <div class="announcement"><%= a.message %></div>
+    <% }) %>
+  </section>
+<% } %>
+
+<% if (church && church.service_times) { %>
+  <section class="band">
+    <h2 class="section-title">Service Times</h2>
+    <p class="service-times"><%= church.service_times %></p>
+  </section>
+<% } %>
+
+<section>
+  <h2 class="section-title">Latest Sermons</h2>
+  <% if (latestSermons && latestSermons.length) { %>
+    <div class="card-grid">
+      <% latestSermons.forEach(function (s) { %>
+        <a class="card sermon-card" href="/sermons/<%= s.id %>">
+          <div class="thumb skeleton">
+            <img class="thumb-img" loading="lazy" src="https://img.youtube.com/vi/<%= s.youtube_id %>/hqdefault.jpg" alt="<%= s.title %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+          </div>
+          <div class="card-body">
+            <h3 class="card-title"><%= s.title %></h3>
+            <p class="card-meta"><%= s.pastor %></p>
+            <p class="card-meta"><%= fmtDate(s.date) %></p>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty">No sermons yet — check back soon.</p>
+  <% } %>
+</section>
+
+<section>
+  <h2 class="section-title">Upcoming Events</h2>
+  <% if (upcomingEvents && upcomingEvents.length) { %>
+    <div class="card-grid">
+      <% upcomingEvents.forEach(function (e) { %>
+        <div class="card event-card">
+          <div class="card-body">
+            <h3 class="card-title"><%= e.title %></h3>
+            <p class="card-meta"><%= fmtDate(e.date) %><% if (e.time) { %> · <%= fmtTime(e.time) %><% } %></p>
+            <% if (e.location) { %><p class="card-meta"><%= e.location %></p><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty">No upcoming events — check back soon.</p>
+  <% } %>
+</section>
+
+<% if (church && church.mission_statement) { %>
+  <section class="band band-navy">
+    <h2 class="section-title">Our Mission</h2>
+    <p class="mission"><%= church.mission_statement %></p>
+  </section>
+<% } %>
+
+<section class="give-cta">
+  <h2 class="section-title">Support Our Ministry</h2>
+  <a class="btn btn-gold" href="/give">Give Now</a>
+</section>

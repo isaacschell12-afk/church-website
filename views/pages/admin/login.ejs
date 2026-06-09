@@ -1,0 +1,19 @@
+<section class="auth-page">
+  <h1 class="page-title">Admin Login</h1>
+
+  <% if (query && query.error) { %>
+    <p class="flash flash-error">Invalid username or password</p>
+  <% } %>
+
+  <form class="auth-form" method="POST" action="/admin/login">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" autocomplete="username" required />
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" required />
+
+    <button type="submit" class="btn btn-navy">Log In</button>
+  </form>
+</section>

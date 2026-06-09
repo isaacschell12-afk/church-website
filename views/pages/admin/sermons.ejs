@@ -1,0 +1,34 @@
+<section>
+  <div class="admin-bar">
+    <h1 class="page-title">Sermons</h1>
+    <a class="btn btn-gold" href="/admin/sermons/new">Add New</a>
+  </div>
+
+  <% if (query && query.success) { %><p class="flash flash-success">Saved successfully</p><% } %>
+  <% if (query && query.error) { %><p class="flash flash-error">There was a problem with that request</p><% } %>
+
+  <% if (rows && rows.length) { %>
+    <table class="admin-table">
+      <thead>
+        <tr><th>Title</th><th>Date</th><th>Pastor</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <% rows.forEach(function (r) { %>
+          <tr>
+            <td><%= r.title %></td>
+            <td><%= fmtDate(r.date) %></td>
+            <td><%= r.pastor %></td>
+            <td class="row-actions">
+              <a class="btn btn-outline btn-sm" href="/admin/sermons/<%= r.id %>/edit">Edit</a>
+              <a class="btn btn-danger btn-sm" href="/admin/sermons/<%= r.id %>/delete">Delete</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <%- include('./_pagination', { base: '/admin/sermons', page: page, totalPages: totalPages }) %>
+  <% } else { %>
+    <p class="empty">No sermons yet.</p>
+  <% } %>
+</section>
