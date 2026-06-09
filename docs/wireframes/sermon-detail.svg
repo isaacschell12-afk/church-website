@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="619" viewBox="0 0 900 619" font-family="monospace">
+<rect width="900" height="619" fill="#fdfdfd"/>
+<text x="16" y="28" font-size="15" font-weight="bold" font-family="monospace">Sermon Detail — /sermon-detail</text>
+<rect x="16" y="46" width="868" height="56" fill="#fff" stroke="#444"/>
+<text x="26" y="66" font-size="11.5" font-family="monospace" fill="#222">HEADER — logo | nav links | Plan a Visit / Give CTAs</text>
+<rect x="16" y="110" width="868" height="28" fill="#fff" stroke="#444"/>
+<text x="26" y="128" font-size="11.5" font-family="monospace" fill="#222">← Back to sermons</text>
+<rect x="16" y="146" width="868" height="70" fill="#fff" stroke="#444"/>
+<text x="26" y="166" font-size="11.5" font-family="monospace" fill="#222">TITLE BLOCK — eyebrow, h1 sermon title, pastor · date</text>
+<rect x="16" y="224" width="868" height="168" fill="#fff" stroke="#444"/>
+<text x="26" y="244" font-size="11.5" font-family="monospace" fill="#222">VIDEO EMBED — 16:9 YouTube iframe (navy fallback)</text>
+<rect x="16" y="400" width="868" height="84" fill="#fff" stroke="#444"/>
+<text x="26" y="420" font-size="11.5" font-family="monospace" fill="#222">DESCRIPTION — prose column</text>
+<rect x="16" y="492" width="868" height="84" fill="#fff" stroke="#444"/>
+<text x="26" y="512" font-size="11.5" font-family="monospace" fill="#222">FOOTER — church + tagline | visit info | connect links | copyright</text>
+<text x="16" y="598" font-size="11" font-family="sans-serif" font-style="italic" fill="#666">Single sermon: back link, title and meta, embedded 16:9 video, and description.</text>
+</svg>
