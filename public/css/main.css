@@ -160,21 +160,22 @@ section:last-child { margin-bottom: 0; }
 
 .eyebrow {
   font-family: 'Inter', sans-serif;
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--gold-ink);
   margin: 0 0 var(--s2);
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.75rem;
 }
 .eyebrow::before {
   content: '';
-  width: 28px;
+  width: 34px;
   height: 1px;
   background: var(--gold);
+  flex: none;
 }
 .band-navy .eyebrow,
 .hero .eyebrow { color: var(--gold-2); }
@@ -314,8 +315,8 @@ section:last-child { margin-bottom: 0; }
 .hero {
   position: relative; overflow: hidden;
   background:
-    radial-gradient(120% 140% at 85% -10%, rgba(176, 138, 62, 0.20), transparent 55%),
-    linear-gradient(180deg, #1a2a49 0%, var(--navy) 60%, #121d33 100%);
+    radial-gradient(70% 110% at 92% -10%, rgba(176, 138, 62, 0.16), transparent 45%),
+    linear-gradient(158deg, #1b2b50 0%, #15223d 55%, #0e1729 100%);
   color: var(--cream);
   border-radius: var(--r-lg);
   padding: clamp(3.25rem, 7vw, 7rem) clamp(1.5rem, 5vw, 5.5rem);
@@ -452,7 +453,8 @@ a.card:hover .thumb-img { transform: scale(1.04); }
   position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center;
   text-align: center; padding: var(--s3); color: var(--cream); margin: 0;
 }
-.give-fallback { color: var(--ink-soft); }
+.give-fallback { color: var(--cream); }
+.give-fallback a { color: var(--gold-2); background-image: linear-gradient(var(--gold-2), var(--gold-2)); }
 .give-frame { background: #fff; }
 
 .sermon-detail__meta { color: var(--ink-soft); display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 0 0 var(--s3); font-size: 0.98rem; }
@@ -487,6 +489,9 @@ textarea { resize: vertical; min-height: 7rem; }
 /* Honeypot — visually hidden + off the tab order (kept identical in contract) */
 .hp-field { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
+/* Screen-reader-only utility (visually hidden, still announced) */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
 /* ── Flash messages ──────────────────────────────────────────────────────── */
 .flash { padding: 0.85rem 1.1rem; border-radius: var(--r); margin: 0 0 var(--s3); border: 1px solid; }
 .flash-success { background: #e9f3ec; border-color: #a9cdb3; color: #1f4d31; }
@@ -501,9 +506,10 @@ textarea { resize: vertical; min-height: 7rem; }
 /* ── Auth / error pages ──────────────────────────────────────────────────── */
 .auth-page { max-width: 420px; margin: clamp(2rem, 6vw, 5rem) auto; }
 .error-page { max-width: 600px; margin: clamp(3rem, 9vw, 7rem) auto; text-align: center; }
-.error-page .eyebrow { justify-content: center; }
+.error-page .eyebrow { display: flex; justify-content: center; }
 .error-page .page-title { margin-left: auto; margin-right: auto; }
-.error-code { font-family: 'Fraunces', serif; font-size: clamp(4rem, 14vw, 9rem); line-height: 1; color: var(--gold); opacity: 0.5; margin-bottom: var(--s2); }
+.error-page .btn { margin: 0 0.3rem; }
+.error-code { font-family: 'Fraunces', serif; font-size: clamp(4rem, 14vw, 9rem); line-height: 1; color: var(--gold-ink); margin-bottom: var(--s2); }
 
 /* ── Admin tables ────────────────────────────────────────────────────────── */
 main.page.admin { padding-top: var(--s4); }
@@ -574,7 +580,11 @@ main.page.admin { padding-top: var(--s4); }
    when they are NOT already in view, so in-view content is never hidden first. */
 @media (prefers-reduced-motion: no-preference) {
   /* Page-load reveal for the first screenful */
-  .hero { animation: fade-up var(--dur) var(--ease) both; }
+  .hero { animation: hero-in 900ms var(--ease) both; }
+  .hero-inner > * { animation: fade-up var(--dur) var(--ease) both; }
+  .hero-inner > *:nth-child(2) { animation-delay: 90ms; }
+  .hero-inner > *:nth-child(3) { animation-delay: 180ms; }
+  .hero-inner > *:nth-child(4) { animation-delay: 270ms; }
   .next-steps > * { animation: fade-up var(--dur) var(--ease) both; }
   .next-steps > *:nth-child(2) { animation-delay: 80ms; }
   .next-steps > *:nth-child(3) { animation-delay: 160ms; }
@@ -596,6 +606,7 @@ main.page.admin { padding-top: var(--s4); }
 }
 
 @keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes hero-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* Global safety net: honor reduced-motion everywhere */
 @media (prefers-reduced-motion: reduce) {
