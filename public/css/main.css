@@ -516,8 +516,10 @@ textarea { resize: vertical; min-height: 7rem; }
 .upload-controls .upload-file { width: auto; flex: 1 1 200px; }
 .upload-status { color: var(--ink-soft); font-size: 0.84rem; }
 
-/* Honeypot — visually hidden + off the tab order (kept identical in contract) */
-.hp-field { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Honeypot — visually hidden + off the tab order (kept identical in contract).
+   width needs !important: the input[type="text"] width:100% rule has higher
+   specificity and otherwise stretches the field past the viewport edge. */
+.hp-field { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* Screen-reader-only utility (visually hidden, still announced) */
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

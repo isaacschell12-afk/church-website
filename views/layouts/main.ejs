@@ -9,7 +9,7 @@
   <link rel="icon" href="<%= church && church.favicon_url ? church.favicon_url : '/images/favicon.ico' %>" />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-600.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/inter-400.woff2" crossorigin />
-  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/main.css?v=<%= locals.assetV || '0' %>" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -75,6 +75,6 @@
     </footer>
   <% } %>
 
-  <script src="/js/admin.js"></script>
+  <script src="/js/admin.js?v=<%= locals.assetV || '0' %>"></script>
 </body>
 </html>
