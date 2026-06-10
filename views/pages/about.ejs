@@ -1,47 +1,48 @@
-<section class="reveal">
-  <p class="eyebrow">Who We Are</p>
-  <h1 class="page-title">About Us</h1>
-  <% if (church && church.about) { %>
-    <p class="lede"><%= church.about %></p>
-  <% } %>
-  <p><a class="btn btn-line-gold" href="/beliefs">What We Believe</a></p>
+<section class="page-head">
+  <div class="container">
+    <p class="eyebrow">Who We Are</p>
+    <h1 class="page-title">About Us</h1>
+    <% if (church && church.about) { %>
+      <p class="lede"><%= church.about %></p>
+    <% } %>
+    <p><a class="btn btn-line-gold" href="/beliefs">What We Believe</a></p>
+  </div>
 </section>
 
 <% if (church && church.mission_statement) { %>
-  <section class="band band-navy reveal">
-    <div class="band-cols">
-      <div>
-        <p class="eyebrow">Who we are</p>
-        <h2 class="section-title">Our Mission</h2>
-      </div>
-      <p class="prose prose-prewrap"><%= church.mission_statement %></p>
+  <section class="section section--navy u-center reveal">
+    <div class="container">
+      <p class="eyebrow">Our mission</p>
+      <p class="scripture scripture--wide prose-prewrap"><%= church.mission_statement %></p>
     </div>
   </section>
 <% } %>
 
-<section class="reveal">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">The People</p>
-      <h2 class="section-title">Our Team</h2>
+<section class="section" aria-label="Our team">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <p class="eyebrow">The People</p>
+        <h2 class="section-title">Our Team</h2>
+      </div>
     </div>
+    <% if (staff && staff.length) { %>
+      <div class="card-grid reveal-group">
+        <% staff.forEach(function (member) { %>
+          <div class="card">
+            <div class="thumb thumb-portrait skeleton">
+              <img class="thumb-img" loading="lazy" src="<%= member.image_url ? member.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= member.name %>" data-fallback="/images/church-logo-placeholder.png" />
+            </div>
+            <div class="card-body">
+              <h3 class="card-title"><%= member.name %></h3>
+              <% if (member.title) { %><p class="card-meta card-meta--caps"><%= member.title %></p><% } %>
+              <% if (member.bio) { %><p class="card-bio"><%= member.bio %></p><% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="empty">Staff information coming soon.</p>
+    <% } %>
   </div>
-  <% if (staff && staff.length) { %>
-    <div class="card-grid reveal-group">
-      <% staff.forEach(function (member) { %>
-        <div class="card">
-          <div class="thumb thumb-portrait skeleton">
-            <img class="thumb-img" loading="lazy" src="<%= member.image_url ? member.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= member.name %>" data-fallback="/images/church-logo-placeholder.png" />
-          </div>
-          <div class="card-body">
-            <h3 class="card-title"><%= member.name %></h3>
-            <% if (member.title) { %><p class="card-meta"><%= member.title %></p><% } %>
-            <% if (member.bio) { %><p class="card-bio"><%= member.bio %></p><% } %>
-          </div>
-        </div>
-      <% }) %>
-    </div>
-  <% } else { %>
-    <p class="empty">Staff information coming soon.</p>
-  <% } %>
 </section>

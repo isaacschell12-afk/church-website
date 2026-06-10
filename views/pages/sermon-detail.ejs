@@ -1,22 +1,28 @@
-<section class="reveal">
-  <p class="back-link"><a class="content-link" href="/sermons">&larr; Back to sermons</a></p>
+<section class="page-head">
+  <div class="container container--narrow">
+    <p class="back-link"><a class="content-link" href="/sermons">&larr; Back to sermons</a></p>
 
-  <p class="eyebrow">Sermon</p>
-  <h1 class="page-title"><%= sermon.title %></h1>
-  <p class="sermon-detail__meta"><%= sermon.pastor %> <span class="dot">&middot;</span> <%= fmtDate(sermon.date) %></p>
-
-  <div class="video-wrap">
-    <p class="video-fallback">This video is temporarily unavailable &mdash; please check back soon</p>
-    <iframe
-      class="video-frame"
-      src="https://www.youtube-nocookie.com/embed/<%= sermon.youtube_id %>"
-      title="<%= sermon.title %>"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen
-    ></iframe>
+    <p class="eyebrow">Sermon</p>
+    <h1 class="page-title"><%= sermon.title %></h1>
+    <p class="sermon-detail__meta"><%= sermon.pastor %> <span class="dot">&middot;</span> <%= fmtDate(sermon.date) %></p>
   </div>
+</section>
 
-  <% if (sermon.description) { %>
-    <div class="prose prose-prewrap"><%= sermon.description %></div>
-  <% } %>
+<section class="section section--flush-top reveal">
+  <div class="container container--narrow">
+    <div class="video-wrap">
+      <p class="video-fallback">This video is temporarily unavailable &mdash; please check back soon</p>
+      <iframe
+        class="video-frame"
+        src="https://www.youtube-nocookie.com/embed/<%= sermon.youtube_id %>"
+        title="<%= sermon.title %>"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+
+    <% if (sermon.description) { %>
+      <div class="prose prose-prewrap"><%= sermon.description %></div>
+    <% } %>
+  </div>
 </section>

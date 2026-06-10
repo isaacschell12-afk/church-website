@@ -1,143 +1,177 @@
 <section class="hero">
-  <div class="hero-inner">
-    <p class="eyebrow">Taylor Mill, Kentucky</p>
-    <h1 class="hero-title"><%= church && church.church_name ? church.church_name : 'Welcome' %></h1>
-    <% if (church && church.tagline) { %>
-      <p class="hero-tagline"><%= church.tagline %></p>
-    <% } %>
-    <div class="hero-actions">
-      <a class="btn btn-gold" href="/visit"><%= church && church.hero_cta_label ? church.hero_cta_label : 'Plan Your Visit' %></a>
-      <a class="btn btn-ghost" href="/sermons">Watch a Sermon</a>
+  <div class="hero-ornament" aria-hidden="true"></div>
+  <div class="container">
+    <div class="hero-inner">
+      <p class="eyebrow">Taylor Mill, Kentucky</p>
+      <h1 class="hero-title"><%= church && church.church_name ? church.church_name : 'Welcome' %></h1>
+      <% if (church && church.tagline) { %>
+        <p class="hero-tagline"><%= church.tagline %></p>
+      <% } %>
+      <div class="hero-actions">
+        <a class="btn btn-gold" href="/visit"><%= church && church.hero_cta_label ? church.hero_cta_label : 'Plan Your Visit' %></a>
+        <a class="btn btn-ghost" href="/sermons">Watch a Sermon</a>
+      </div>
     </div>
+    <% if (church && (church.address || church.phone)) { %>
+      <div class="hero-meta">
+        <% if (church.address) { %><span><strong>Find us</strong> &mdash; <%= church.address %></span><% } %>
+        <% if (church.phone) { %><span><strong>Call</strong> &mdash; <%= church.phone %></span><% } %>
+      </div>
+    <% } %>
   </div>
 </section>
 
 <% if (announcements && announcements.length) { %>
-  <section class="announcements" aria-label="Announcements">
-    <% announcements.forEach(function (a) { %>
-      <div class="announcement"><%= a.message %></div>
-    <% }) %>
+  <section class="section section--sm" aria-label="Announcements">
+    <div class="container">
+      <div class="announcements">
+        <% announcements.forEach(function (a) { %>
+          <div class="announcement"><%= a.message %></div>
+        <% }) %>
+      </div>
+    </div>
   </section>
 <% } %>
 
-<section aria-label="Find your way">
-  <div class="next-steps">
-    <a class="next-step-card" href="/visit">
-      <span class="next-step-title">I'm New</span>
-      <span class="next-step-text">Plan your first visit — here's what to expect.</span>
-      <span class="next-step-arrow">Plan a visit &rarr;</span>
-    </a>
-    <a class="next-step-card" href="/sunday-school">
-      <span class="next-step-title">Sunday School</span>
-      <span class="next-step-text">A class for every age. Come as you are.</span>
-      <span class="next-step-arrow">Explore &rarr;</span>
-    </a>
-    <a class="next-step-card" href="/ministries">
-      <span class="next-step-title">Ministries</span>
-      <span class="next-step-text">Find a place to belong and serve.</span>
-      <span class="next-step-arrow">Get involved &rarr;</span>
-    </a>
-    <a class="next-step-card" href="/sermons">
-      <span class="next-step-title">Messages</span>
-      <span class="next-step-text">Catch up on recent sermons.</span>
-      <span class="next-step-arrow">Watch &rarr;</span>
-    </a>
+<section class="section<%= announcements && announcements.length ? ' section--flush-top' : '' %>" aria-label="Find your way">
+  <div class="container">
+    <div class="next-steps">
+      <a class="next-step-card" href="/visit">
+        <span class="next-step-title">I'm New</span>
+        <span class="next-step-text">Plan your first visit — here's what to expect.</span>
+        <span class="next-step-arrow">Plan a visit &rarr;</span>
+      </a>
+      <a class="next-step-card" href="/sunday-school">
+        <span class="next-step-title">Sunday School</span>
+        <span class="next-step-text">A class for every age. Come as you are.</span>
+        <span class="next-step-arrow">Explore &rarr;</span>
+      </a>
+      <a class="next-step-card" href="/ministries">
+        <span class="next-step-title">Ministries</span>
+        <span class="next-step-text">Find a place to belong and serve.</span>
+        <span class="next-step-arrow">Get involved &rarr;</span>
+      </a>
+      <a class="next-step-card" href="/sermons">
+        <span class="next-step-title">Messages</span>
+        <span class="next-step-text">Catch up on recent sermons.</span>
+        <span class="next-step-arrow">Watch &rarr;</span>
+      </a>
+    </div>
   </div>
 </section>
 
 <% if (church && church.service_times) { %>
-  <section class="band band-navy reveal">
-    <div class="band-cols">
-      <div>
-        <p class="eyebrow">Gather with us</p>
-        <h2 class="section-title">Service Times</h2>
+  <section class="section section--navy reveal">
+    <div class="container">
+      <div class="band-cols">
+        <div>
+          <p class="eyebrow">Gather with us</p>
+          <h2 class="section-title">Service Times</h2>
+        </div>
+        <p class="service-times prose-prewrap"><%= church.service_times %></p>
       </div>
-      <p class="service-times prose-prewrap"><%= church.service_times %></p>
     </div>
   </section>
 <% } %>
 
-<section aria-label="Latest sermons">
-  <div class="section-head reveal">
-    <div>
-      <p class="eyebrow">Messages</p>
-      <h2 class="section-title">Latest Sermons</h2>
+<section class="section" aria-label="Latest sermons">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <p class="eyebrow">Messages</p>
+        <h2 class="section-title">Latest Sermons</h2>
+      </div>
+      <a class="content-link section-head__link" href="/sermons">View all sermons &rarr;</a>
     </div>
-    <a class="content-link section-head__link" href="/sermons">View all sermons &rarr;</a>
-  </div>
-  <% if (latestSermons && latestSermons.length) { %>
-    <div class="card-grid reveal-group">
-      <% latestSermons.forEach(function (s) { %>
-        <a class="card sermon-card" href="/sermons/<%= s.id %>">
-          <div class="thumb skeleton">
-            <img class="thumb-img" loading="lazy" src="https://img.youtube.com/vi/<%= s.youtube_id %>/hqdefault.jpg" alt="<%= s.title %>" data-fallback="/images/church-logo-placeholder.png" />
-          </div>
-          <div class="card-body">
-            <h3 class="card-title"><%= s.title %></h3>
-            <p class="card-meta"><%= s.pastor %></p>
-            <p class="card-meta"><%= fmtDate(s.date) %></p>
-          </div>
-        </a>
-      <% }) %>
-    </div>
-  <% } else { %>
-    <p class="empty">No sermons yet — check back soon.</p>
-  <% } %>
-</section>
-
-<section aria-label="Upcoming events">
-  <div class="section-head reveal">
-    <div>
-      <p class="eyebrow">This week &amp; beyond</p>
-      <h2 class="section-title">Upcoming Events</h2>
-    </div>
-    <a class="content-link section-head__link" href="/events">View all events &rarr;</a>
-  </div>
-  <% if (upcomingEvents && upcomingEvents.length) { %>
-    <div class="card-grid reveal-group">
-      <% upcomingEvents.forEach(function (e) { %>
-        <a class="card event-card" href="/events/<%= e.id %>">
-          <div class="card-body">
-            <h3 class="card-title"><%= e.title %></h3>
-            <p class="card-meta"><%= fmtDate(e.date) %><% if (e.time) { %> &middot; <%= fmtTime(e.time) %><% } %></p>
-            <% if (e.location) { %><p class="card-meta"><%= e.location %></p><% } %>
-            <span class="card-link next-step-arrow">Details &rarr;</span>
-          </div>
-        </a>
-      <% }) %>
-    </div>
-  <% } else { %>
-    <p class="empty">No upcoming events — check back soon.</p>
-  <% } %>
-</section>
-
-<section class="band spotlight reveal" aria-label="Sunday School">
-  <div class="spotlight-body">
-    <p class="eyebrow">For every age</p>
-    <h2 class="section-title">There's a place for you in Sunday School</h2>
-    <% if (church && church.sunday_school_schedule) { %>
-      <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
+    <% if (latestSermons && latestSermons.length) { %>
+      <div class="card-grid reveal-group">
+        <% latestSermons.forEach(function (s) { %>
+          <a class="card sermon-card" href="/sermons/<%= s.id %>">
+            <div class="thumb skeleton">
+              <img class="thumb-img" loading="lazy" src="https://img.youtube.com/vi/<%= s.youtube_id %>/hqdefault.jpg" alt="<%= s.title %>" data-fallback="/images/church-logo-placeholder.png" />
+            </div>
+            <div class="card-body">
+              <h3 class="card-title"><%= s.title %></h3>
+              <p class="card-meta card-meta--caps"><%= s.pastor %></p>
+              <p class="card-meta"><%= fmtDate(s.date) %></p>
+            </div>
+          </a>
+        <% }) %>
+      </div>
     <% } else { %>
-      <p>A warm, unhurried place to dig into Scripture and get to know people — for every age.</p>
+      <p class="empty">No sermons yet — check back soon.</p>
     <% } %>
   </div>
-  <a class="btn btn-line-gold" href="/sunday-school">Explore Sunday School</a>
+</section>
+
+<section class="section section--tint" aria-label="Upcoming events">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <p class="eyebrow">This week &amp; beyond</p>
+        <h2 class="section-title">Upcoming Events</h2>
+      </div>
+      <a class="content-link section-head__link" href="/events">View all events &rarr;</a>
+    </div>
+    <% if (upcomingEvents && upcomingEvents.length) { %>
+      <div class="card-grid reveal-group">
+        <% upcomingEvents.forEach(function (e) { %>
+          <% var dp = (fmtDate(e.date) || '').replace(',', '').split(' '); %>
+          <a class="card card--event event-card" href="/events/<%= e.id %>">
+            <div class="card-body">
+              <% if (dp.length >= 2) { %>
+                <span class="date-block" aria-hidden="true">
+                  <span class="date-block__mon"><%= dp[0].slice(0, 3) %></span>
+                  <span class="date-block__day"><%= dp[1] %></span>
+                </span>
+              <% } %>
+              <div class="card-main">
+                <h3 class="card-title"><%= e.title %></h3>
+                <p class="card-meta"><%= fmtDate(e.date) %><% if (e.time) { %> &middot; <%= fmtTime(e.time) %><% } %></p>
+                <% if (e.location) { %><p class="card-meta"><%= e.location %></p><% } %>
+                <span class="card-link next-step-arrow">Details &rarr;</span>
+              </div>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="empty">No upcoming events — check back soon.</p>
+    <% } %>
+  </div>
+</section>
+
+<section class="section" aria-label="Sunday School">
+  <div class="container">
+    <div class="band spotlight reveal">
+      <div class="spotlight-body">
+        <p class="eyebrow">For every age</p>
+        <h2 class="section-title">There's a place for you in Sunday School</h2>
+        <% if (church && church.sunday_school_schedule) { %>
+          <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
+        <% } else { %>
+          <p>A warm, unhurried place to dig into Scripture and get to know people — for every age.</p>
+        <% } %>
+      </div>
+      <a class="btn btn-line-gold" href="/sunday-school">Explore Sunday School</a>
+    </div>
+  </div>
 </section>
 
 <% if (church && church.mission_statement) { %>
-  <section class="band band-navy reveal">
-    <div class="band-cols">
-      <div>
-        <p class="eyebrow">Our mission</p>
-      </div>
-      <p class="mission prose-prewrap"><%= church.mission_statement %></p>
+  <section class="section section--navy u-center reveal">
+    <div class="container">
+      <p class="eyebrow">Our mission</p>
+      <p class="scripture scripture--wide prose-prewrap"><%= church.mission_statement %></p>
     </div>
   </section>
 <% } %>
 
-<section class="give-cta reveal">
-  <p class="eyebrow">Give</p>
-  <h2 class="section-title">Support our ministry</h2>
-  <p class="lede give-cta__lede">Your generosity makes our work possible.</p>
-  <p><a class="btn btn-gold" href="/give">Give Now</a></p>
+<section class="section give-cta reveal">
+  <div class="container">
+    <p class="eyebrow">Give</p>
+    <h2 class="section-title">Support our ministry</h2>
+    <p class="lede give-cta__lede">Your generosity makes our work possible.</p>
+    <p><a class="btn btn-gold" href="/give">Give Now</a></p>
+  </div>
 </section>

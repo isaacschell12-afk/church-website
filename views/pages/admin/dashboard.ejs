@@ -19,16 +19,16 @@
 
   <h2 class="section-title">Manage</h2>
   <div class="quick-nav">
-    <a class="btn btn-navy" href="/admin/sermons">Sermons</a>
-    <a class="btn btn-navy" href="/admin/events">Events</a>
-    <a class="btn btn-navy" href="/admin/ministries">Ministries</a>
-    <a class="btn btn-navy" href="/admin/announcements">Announcements</a>
-    <a class="btn btn-navy" href="/admin/staff">Staff</a>
-    <a class="btn btn-navy" href="/admin/sunday-school">Sunday School</a>
-    <a class="btn btn-navy" href="/admin/messages">Messages<%= counts.unreadMessages ? ' (' + counts.unreadMessages + ')' : '' %></a>
+    <a class="btn btn-outline" href="/admin/sermons">Sermons</a>
+    <a class="btn btn-outline" href="/admin/events">Events</a>
+    <a class="btn btn-outline" href="/admin/ministries">Ministries</a>
+    <a class="btn btn-outline" href="/admin/announcements">Announcements</a>
+    <a class="btn btn-outline" href="/admin/staff">Staff</a>
+    <a class="btn btn-outline" href="/admin/sunday-school">Sunday School</a>
+    <a class="btn btn-outline" href="/admin/messages">Messages<%= counts.unreadMessages ? ' (' + counts.unreadMessages + ')' : '' %></a>
     <% if (locals.user && user.role === 'superadmin') { %>
-      <a class="btn btn-gold" href="/admin/church">Church Info</a>
-      <a class="btn btn-gold" href="/admin/users">Users</a>
+      <a class="btn btn-line-gold" href="/admin/church">Church Info</a>
+      <a class="btn btn-line-gold" href="/admin/users">Users</a>
     <% } %>
   </div>
 

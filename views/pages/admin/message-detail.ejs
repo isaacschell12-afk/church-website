@@ -3,10 +3,11 @@
 
   <p class="eyebrow"><%= msg.source || 'Contact form' %></p>
   <h1 class="page-title">Message from <%= msg.name %></h1>
+  <% var rcv = new Date(msg.created_at); %>
   <p class="sermon-detail__meta">
     <a class="content-link" href="mailto:<%= msg.email %>"><%= msg.email %></a>
     <span class="dot">&middot;</span>
-    <%= fmtDate(msg.created_at) %>
+    <%= rcv.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %> &middot; <%= rcv.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %>
   </p>
 
   <div class="band">
@@ -19,6 +20,6 @@
       <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
       <button type="submit" class="btn btn-outline">Mark unread</button>
     </form>
-    <a class="btn btn-danger" href="/admin/messages/<%= msg.id %>/delete">Delete</a>
+    <a class="btn btn-line-danger" href="/admin/messages/<%= msg.id %>/delete">Delete</a>
   </div>
 </section>

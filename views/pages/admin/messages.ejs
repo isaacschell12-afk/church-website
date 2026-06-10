@@ -19,16 +19,17 @@
               <%= m.name %><br />
               <span class="cell-sub"><%= m.email %></span>
             </td>
-            <td data-label="Received"><%= fmtDate(m.created_at) %></td>
+            <% var rcv = new Date(m.created_at); %>
+            <td data-label="Received"><%= rcv.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %> &middot; <%= rcv.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %></td>
             <td data-label="Source"><%= m.source || 'Contact form' %></td>
             <td data-label="Message"><%= m.preview %><%= m.preview && m.preview.length >= 160 ? '…' : '' %></td>
             <td class="row-actions">
-              <a class="btn btn-outline btn-sm" href="/admin/messages/<%= m.id %>"><%= m.is_read ? 'View' : 'Read' %></a>
+              <a class="btn btn-navy btn-sm" href="/admin/messages/<%= m.id %>"><%= m.is_read ? 'View' : 'Read' %></a>
               <form class="inline-form" method="POST" action="/admin/messages/<%= m.id %>/toggle-read">
                 <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
                 <button type="submit" class="btn btn-outline btn-sm"><%= m.is_read ? 'Mark unread' : 'Mark read' %></button>
               </form>
-              <a class="btn btn-danger btn-sm" href="/admin/messages/<%= m.id %>/delete">Delete</a>
+              <a class="btn btn-line-danger btn-sm" href="/admin/messages/<%= m.id %>/delete">Delete</a>
             </td>
           </tr>
         <% }) %>

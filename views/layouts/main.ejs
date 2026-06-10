@@ -8,6 +8,7 @@
   <meta name="csrf-token" content="<%= locals.csrfToken || '' %>" />
   <link rel="icon" href="<%= church && church.favicon_url ? church.favicon_url : '/images/favicon.ico' %>" />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-600.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-400-italic.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/inter-400.woff2" crossorigin />
   <link rel="stylesheet" href="/css/main.css?v=<%= locals.assetV || '0' %>" />
 </head>
@@ -40,38 +41,44 @@
           <a href="/events">Events</a>
           <span class="nav-cta">
             <a class="btn btn-gold btn-sm" href="/visit">Plan a Visit</a>
-            <a class="btn btn-outline btn-sm" href="/give">Give</a>
+            <a class="btn btn-line-gold btn-sm" href="/give">Give</a>
           </span>
         </nav>
       </div>
     </header>
   <% } %>
 
-  <main id="main" class="container page<%= locals.admin ? ' admin' : '' %>">
+  <main id="main" class="page<%= locals.admin ? ' container admin' : '' %>">
     <%- include(bodyPath) %>
   </main>
 
   <% if (!locals.admin) { %>
     <footer class="site-footer">
-      <div class="container footer-grid">
-        <div>
-          <h2 class="footer-heading"><%= church && church.church_name ? church.church_name : 'Our Church' %></h2>
-          <% if (church && church.tagline) { %><p><%= church.tagline %></p><% } %>
-          <p><a href="/visit">Plan a visit &rarr;</a></p>
+      <div class="container">
+        <% if (church && church.tagline) { %>
+          <p class="footer-statement"><%= church.tagline %></p>
+        <% } %>
+        <div class="footer-grid">
+          <div>
+            <h2 class="footer-heading"><%= church && church.church_name ? church.church_name : 'Our Church' %></h2>
+            <p><a href="/visit">Plan a visit &rarr;</a></p>
+            <p><a href="/beliefs">What we believe &rarr;</a></p>
+            <p><a href="/give">Give online &rarr;</a></p>
+          </div>
+          <div>
+            <h2 class="footer-heading">Visit</h2>
+            <% if (church && church.address) { %><p><%= church.address %></p><% } %>
+            <% if (church && church.service_times) { %><p class="prose-prewrap"><%= church.service_times %></p><% } %>
+          </div>
+          <div>
+            <h2 class="footer-heading">Connect</h2>
+            <% if (church && church.phone) { %><p><%= church.phone %></p><% } %>
+            <% if (church && church.email) { %><p><a href="mailto:<%= church.email %>"><%= church.email %></a></p><% } %>
+            <p><a href="/contact">Send a message &rarr;</a></p>
+          </div>
         </div>
-        <div>
-          <h2 class="footer-heading">Visit</h2>
-          <% if (church && church.address) { %><p><%= church.address %></p><% } %>
-          <% if (church && church.service_times) { %><p><%= church.service_times %></p><% } %>
-        </div>
-        <div>
-          <h2 class="footer-heading">Connect</h2>
-          <% if (church && church.phone) { %><p><%= church.phone %></p><% } %>
-          <% if (church && church.email) { %><p><a href="mailto:<%= church.email %>"><%= church.email %></a></p><% } %>
-          <p><a href="/contact">Send a message &rarr;</a></p>
-        </div>
+        <p class="footer-bottom">&copy; <%= church && church.church_name ? church.church_name : 'Our Church' %></p>
       </div>
-      <p class="footer-bottom">&copy; <%= church && church.church_name ? church.church_name : 'Our Church' %></p>
     </footer>
   <% } %>
 

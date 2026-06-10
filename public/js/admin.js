@@ -31,6 +31,16 @@
       });
     });
 
+    // ── Mark the current page in the nav (presentation only) ──────────────
+    document.querySelectorAll('.main-nav > a[href]').forEach(function (a) {
+      var href = a.getAttribute('href');
+      // Roots ('/', '/admin') match exactly only, so they don't shadow subpages.
+      var isRoot = href === '/' || href === '/admin';
+      if (href === location.pathname || (!isRoot && location.pathname.indexOf(href + '/') === 0)) {
+        a.setAttribute('aria-current', 'page');
+      }
+    });
+
     // ── Sticky header condense on scroll ──────────────────────────────────
     var header = document.querySelector('[data-site-header]');
     if (header) {

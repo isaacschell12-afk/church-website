@@ -1,27 +1,31 @@
-<section class="reveal">
-  <p class="eyebrow">Generosity</p>
-  <h1 class="page-title">Give</h1>
+<section class="page-head page-head--rule">
+  <div class="container">
+    <p class="eyebrow">Generosity</p>
+    <h1 class="page-title">Give</h1>
 
-  <% if (church && church.give_intro) { %>
-    <p class="lede prose prose-prewrap"><%= church.give_intro %></p>
-  <% } %>
+    <% if (church && church.give_intro) { %>
+      <p class="lede prose prose-prewrap"><%= church.give_intro %></p>
+    <% } %>
+  </div>
 </section>
 
-<section class="reveal">
-  <% if (church && church.giving_embed_url) { %>
-    <div class="give-embed">
-      <iframe
-        class="give-frame"
-        src="<%= church.giving_embed_url %>"
-        title="Online giving"
-        allow="payment"
-      ></iframe>
-      <p class="give-fallback">
-        Having trouble? To give online please visit
-        <a class="content-link" href="<%= church.giving_embed_url %>" target="_blank" rel="noopener">our giving portal</a>
-      </p>
-    </div>
-  <% } else { %>
-    <p class="empty">Online giving will be available soon.</p>
-  <% } %>
+<section class="section reveal">
+  <div class="container">
+    <% if (church && church.giving_embed_url) { %>
+      <div class="give-embed">
+        <iframe
+          class="give-frame"
+          src="<%= church.giving_embed_url %>"
+          title="Online giving"
+          allow="payment"
+        ></iframe>
+        <p class="give-fallback">
+          Having trouble? To give online please visit
+          <a class="content-link" href="<%= church.giving_embed_url %>" target="_blank" rel="noopener">our giving portal</a>
+        </p>
+      </div>
+    <% } else { %>
+      <p class="empty">Online giving will be available soon.</p>
+    <% } %>
+  </div>
 </section>

@@ -1,54 +1,62 @@
-<section class="reveal">
-  <p class="eyebrow">For every age</p>
-  <h1 class="page-title">Sunday School</h1>
+<section class="page-head">
+  <div class="container">
+    <p class="eyebrow">For every age</p>
+    <h1 class="page-title">Sunday School</h1>
 
-  <% if (church && church.sunday_school_intro) { %>
-    <p class="lede prose prose-prewrap"><%= church.sunday_school_intro %></p>
-  <% } %>
+    <% if (church && church.sunday_school_intro) { %>
+      <p class="lede prose prose-prewrap"><%= church.sunday_school_intro %></p>
+    <% } %>
+  </div>
 </section>
 
 <% if (church && church.sunday_school_schedule) { %>
-  <section class="band band-navy reveal">
-    <div class="band-cols">
-      <div>
-        <p class="eyebrow">Gather with us</p>
-        <h2 class="section-title">When We Meet</h2>
+  <section class="section section--navy reveal">
+    <div class="container">
+      <div class="band-cols">
+        <div>
+          <p class="eyebrow">Gather with us</p>
+          <h2 class="section-title">When We Meet</h2>
+        </div>
+        <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
       </div>
-      <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
     </div>
   </section>
 <% } %>
 
-<section class="reveal">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">Grow together</p>
-      <h2 class="section-title">Our Classes</h2>
+<section class="section" aria-label="Our classes">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <p class="eyebrow">Grow together</p>
+        <h2 class="section-title">Our Classes</h2>
+      </div>
     </div>
-  </div>
 
-  <% if (classes && classes.length) { %>
-    <div class="card-grid reveal-group">
-      <% classes.forEach(function (c) { %>
-        <div class="card">
-          <div class="card-body">
-            <h3 class="card-title"><%= c.name %></h3>
-            <% if (c.age_group) { %><p class="card-meta"><%= c.age_group %></p><% } %>
-            <% if (c.location) { %><p class="card-meta">Room: <%= c.location %></p><% } %>
-            <% if (c.teacher) { %><p class="card-meta">Teacher: <%= c.teacher %></p><% } %>
-            <% if (c.description) { %><p class="card-bio"><%= c.description %></p><% } %>
+    <% if (classes && classes.length) { %>
+      <div class="card-grid reveal-group">
+        <% classes.forEach(function (c) { %>
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title"><%= c.name %></h3>
+              <% if (c.age_group) { %><p class="card-meta card-meta--caps"><%= c.age_group %></p><% } %>
+              <% if (c.location) { %><p class="card-meta">Room: <%= c.location %></p><% } %>
+              <% if (c.teacher) { %><p class="card-meta">Teacher: <%= c.teacher %></p><% } %>
+              <% if (c.description) { %><p class="card-bio"><%= c.description %></p><% } %>
+            </div>
           </div>
-        </div>
-      <% }) %>
-    </div>
-  <% } else { %>
-    <p class="empty">Class details are coming soon — and there's a place for you in every one of them.</p>
-  <% } %>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="empty">Class details are coming soon — and there's a place for you in every one of them.</p>
+    <% } %>
+  </div>
 </section>
 
-<section class="give-cta reveal">
-  <p class="eyebrow">New here?</p>
-  <h2 class="section-title">We'd love to meet you.</h2>
-  <p class="prose">Come as you are — we'll help you and your family find the right class and a warm welcome.</p>
-  <a class="btn btn-gold" href="/visit">Plan a Visit</a>
+<section class="section section--tint give-cta reveal">
+  <div class="container">
+    <p class="eyebrow">New here?</p>
+    <h2 class="section-title">We'd love to meet you.</h2>
+    <p class="prose">Come as you are — we'll help you and your family find the right class and a warm welcome.</p>
+    <a class="btn btn-gold" href="/visit">Plan a Visit</a>
+  </div>
 </section>

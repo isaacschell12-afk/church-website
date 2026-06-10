@@ -7,6 +7,8 @@
   <form class="admin-form" method="POST" action="/admin/church">
     <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
 
+    <h2 class="form-section-head">Identity</h2>
+
     <label for="church_name">Church Name</label>
     <input type="text" id="church_name" name="church_name" maxlength="200" value="<%= church_info.church_name || '' %>" />
 
@@ -19,6 +21,8 @@
     <label for="mission_statement">Mission Statement</label>
     <textarea id="mission_statement" name="mission_statement" rows="4"><%= church_info.mission_statement || '' %></textarea>
 
+    <h2 class="form-section-head">Contact &amp; Service Times</h2>
+
     <label for="address">Address</label>
     <textarea id="address" name="address" rows="2"><%= church_info.address || '' %></textarea>
 
@@ -30,6 +34,8 @@
 
     <label for="service_times">Service Times</label>
     <textarea id="service_times" name="service_times" rows="3"><%= church_info.service_times || '' %></textarea>
+
+    <h2 class="form-section-head">Page Content</h2>
 
     <label for="visit_info">Plan a Visit (what to expect)</label>
     <textarea id="visit_info" name="visit_info" rows="8"><%= church_info.visit_info || '' %></textarea>
@@ -45,6 +51,8 @@
     <label for="sunday_school_schedule">Sunday School — Schedule</label>
     <textarea id="sunday_school_schedule" name="sunday_school_schedule" rows="3"><%= church_info.sunday_school_schedule || '' %></textarea>
     <p class="field-note">Also summarized in the Sunday School spotlight on the home page.</p>
+
+    <h2 class="form-section-head">Embeds &amp; Settings</h2>
 
     <label for="timezone">Timezone</label>
     <select id="timezone" name="timezone">
@@ -64,6 +72,8 @@
     <label for="give_intro">Giving Intro</label>
     <textarea id="give_intro" name="give_intro" rows="3"><%= church_info.give_intro || '' %></textarea>
 
+    <h2 class="form-section-head">Branding</h2>
+
     <label for="hero_cta_label">Hero Button Label</label>
     <input type="text" id="hero_cta_label" name="hero_cta_label" maxlength="50" value="<%= church_info.hero_cta_label || '' %>" />
 
@@ -72,7 +82,7 @@
     <div class="upload-controls" data-upload-for="logo_url">
       <input type="file" class="upload-file" accept="image/*" data-upload-input />
       <button type="button" class="btn btn-outline" data-upload-button>Upload Logo</button>
-      <span class="upload-status" data-upload-status></span>
+      <span class="upload-status" role="status" data-upload-status></span>
     </div>
 
     <label for="favicon_url">Favicon</label>
@@ -80,7 +90,7 @@
     <div class="upload-controls" data-upload-for="favicon_url">
       <input type="file" class="upload-file" accept="image/*" data-upload-input />
       <button type="button" class="btn btn-outline" data-upload-button>Upload Favicon</button>
-      <span class="upload-status" data-upload-status></span>
+      <span class="upload-status" role="status" data-upload-status></span>
     </div>
 
     <button type="submit" class="btn btn-navy">Save</button>
