@@ -1,0 +1,21 @@
+<section class="reveal">
+  <p class="back-link"><a class="content-link" href="/events">&larr; Back to events</a></p>
+
+  <p class="eyebrow">Event</p>
+  <h1 class="page-title"><%= event.title %></h1>
+  <p class="sermon-detail__meta">
+    <%= fmtDate(event.date) %>
+    <% if (event.time) { %><span class="dot">&middot;</span> <%= fmtTime(event.time) %><% } %>
+    <% if (event.location) { %><span class="dot">&middot;</span> <%= event.location %><% } %>
+  </p>
+
+  <% if (event.description) { %>
+    <div class="prose prose-prewrap"><%= event.description %></div>
+  <% } else { %>
+    <p class="prose">Details are coming soon — we hope you can join us.</p>
+  <% } %>
+
+  <hr class="rule" />
+  <p class="prose">New here? We'd love to welcome you in person.</p>
+  <a class="btn btn-line-gold" href="/visit">Plan a Visit</a>
+</section>

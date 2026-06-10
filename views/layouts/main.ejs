@@ -9,7 +9,7 @@
   <link rel="icon" href="<%= church && church.favicon_url ? church.favicon_url : '/images/favicon.ico' %>" />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-600.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/inter-400.woff2" crossorigin />
-  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/main.css?v=<%= locals.assetV || '0' %>" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -21,7 +21,7 @@
       <div class="container nav-bar">
         <a class="brand" href="/">
           <% if (church && church.logo_url) { %>
-            <img class="brand-logo" src="<%= church.logo_url %>" alt="<%= church.church_name %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+            <img class="brand-logo" src="<%= church.logo_url %>" alt="<%= church.church_name %>" data-fallback="/images/church-logo-placeholder.png" />
           <% } else { %>
             <span class="brand-name"><%= church && church.church_name ? church.church_name : 'Our Church' %></span>
           <% } %>
@@ -75,6 +75,6 @@
     </footer>
   <% } %>
 
-  <script src="/js/admin.js"></script>
+  <script src="/js/admin.js?v=<%= locals.assetV || '0' %>"></script>
 </body>
 </html>

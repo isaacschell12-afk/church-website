@@ -59,6 +59,7 @@
 
     <label for="giving_embed_url">Giving Embed URL</label>
     <input type="text" id="giving_embed_url" name="giving_embed_url" value="<%= church_info.giving_embed_url || '' %>" />
+    <p class="field-note">Must be https and hosted on pushpay.com or tithe.ly (the only providers the site allows to be embedded)</p>
 
     <label for="give_intro">Giving Intro</label>
     <textarea id="give_intro" name="give_intro" rows="3"><%= church_info.give_intro || '' %></textarea>

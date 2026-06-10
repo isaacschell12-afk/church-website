@@ -8,10 +8,14 @@
 </section>
 
 <% if (church && church.mission_statement) { %>
-  <section class="band-navy reveal">
-    <p class="eyebrow">Our Mission</p>
-    <h2 class="section-title">Our Mission</h2>
-    <p class="prose prose-prewrap"><%= church.mission_statement %></p>
+  <section class="band band-navy reveal">
+    <div class="band-cols">
+      <div>
+        <p class="eyebrow">Who we are</p>
+        <h2 class="section-title">Our Mission</h2>
+      </div>
+      <p class="prose prose-prewrap"><%= church.mission_statement %></p>
+    </div>
   </section>
 <% } %>
 
@@ -27,7 +31,7 @@
       <% staff.forEach(function (member) { %>
         <div class="card">
           <div class="thumb thumb-portrait skeleton">
-            <img class="thumb-img" loading="lazy" src="<%= member.image_url ? member.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= member.name %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+            <img class="thumb-img" loading="lazy" src="<%= member.image_url ? member.image_url : '/images/church-logo-placeholder.png' %>" alt="<%= member.name %>" data-fallback="/images/church-logo-placeholder.png" />
           </div>
           <div class="card-body">
             <h3 class="card-title"><%= member.name %></h3>

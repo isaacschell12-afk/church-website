@@ -27,6 +27,7 @@ const REQUIRED_ENV = [
   'PORT',
   'DATABASE_URL',
   'JWT_SECRET',
+  'CSRF_SECRET',
   'BACKUP_SECRET',
   'BACKUP_EMAIL',
   'CHURCH_CONTACT_EMAIL',
@@ -48,6 +49,9 @@ const REQUIRED_ENV = [
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
     problems.push('JWT_SECRET must be at least 32 characters');
   }
+  if (process.env.CSRF_SECRET && process.env.CSRF_SECRET.length < 32) {
+    problems.push('CSRF_SECRET must be at least 32 characters');
+  }
   if (process.env.BACKUP_SECRET && process.env.BACKUP_SECRET.length < 64) {
     problems.push('BACKUP_SECRET must be at least 64 characters');
   }
@@ -61,6 +65,11 @@ const REQUIRED_ENV = [
 
 const PORT = process.env.PORT;
 const isProd = process.env.NODE_ENV === 'production';
+
+// Cache-busting token for static assets (CSS/JS links in the layout). Static
+// files are served with a one-day cache; a fresh token per server start means
+// every deploy/restart serves fresh assets without anyone hard-refreshing.
+const ASSET_VERSION = Date.now().toString(36);
 
 const app = express();
 
@@ -90,10 +99,6 @@ app.use(
           'https://res.cloudinary.com',
         ],
         scriptSrc: ["'self'"],
-        // Permit inline event-handler attributes ONLY (the spec-mandated
-        // onerror="this.src='...'" image fallbacks). Actual <script> sources stay
-        // locked to 'self'. Safe here because every dynamic value is HTML-escaped (<%=).
-        scriptSrcAttr: ["'unsafe-inline'"],
         styleSrc: ["'self'"],
         fontSrc: ["'self'"],
         connectSrc: ["'self'"],
@@ -118,27 +123,20 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cookieParser());
 
-// ── Health check (before rate limiting and CSRF) ────────────────────────────
-app.get('/health', async (req, res) => {
+// ── Health check (before the global limiter so probes never 429; it gets its
+// own small limit instead). Deliberately terse — no counts or internal state.
+const healthLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.get('/health', healthLimiter, async (req, res) => {
   try {
     await pool.query('SELECT 1');
-    const [admins, migrations] = await Promise.all([
-      pool.query('SELECT COUNT(*)::int AS c FROM admins'),
-      pool.query('SELECT COUNT(*)::int AS c FROM migrations'),
-    ]);
-    res.json({
-      status: 'ok',
-      uptime: process.uptime(),
-      db: 'connected',
-      adminCount: admins.rows[0].c,
-      migrationVersion: migrations.rows[0].c,
-    });
+    res.json({ status: 'ok' });
   } catch (err) {
-    res.status(500).json({
-      status: 'error',
-      uptime: process.uptime(),
-      db: 'disconnected',
-    });
+    res.status(500).json({ status: 'error' });
   }
 });
 
@@ -155,6 +153,7 @@ app.use(
 // ── res.locals: church info, query params, date/time formatters ─────────────
 app.use(async (req, res, next) => {
   res.locals.query = req.query || {};
+  res.locals.assetV = ASSET_VERSION;
   res.locals.fmtDate = function (d) {
     if (!d) return '';
     const parts = String(d).slice(0, 10).split('-');
@@ -189,7 +188,7 @@ app.use(async (req, res, next) => {
 
 // ── CSRF: double-submit cookie mode (no sessions) ───────────────────────────
 const { generateToken, doubleCsrfProtection } = doubleCsrf({
-  getSecret: () => process.env.JWT_SECRET,
+  getSecret: () => process.env.CSRF_SECRET,
   cookieName: isProd ? '__Host-csrf' : 'csrf-token',
   cookieOptions: {
     httpOnly: true,
@@ -216,8 +215,14 @@ app.use((req, res, next) => {
 
 // Validate the token on mutating requests, EXCEPT the two machine endpoints that
 // authenticate by their own token (backup = Bearer BACKUP_SECRET, reset = ADMIN_RESET_TOKEN).
+// /admin/backup is only exempt when it actually presents a Bearer header; the
+// cookie-authenticated (superadmin session) path still gets normal CSRF checks.
 app.use((req, res, next) => {
-  if (req.path === '/admin/backup' || req.path === '/admin/auth/reset-password') {
+  const isBearerBackup =
+    req.path === '/admin/backup' &&
+    typeof req.headers.authorization === 'string' &&
+    req.headers.authorization.startsWith('Bearer ');
+  if (isBearerBackup || req.path === '/admin/auth/reset-password') {
     return next();
   }
   return doubleCsrfProtection(req, res, next);

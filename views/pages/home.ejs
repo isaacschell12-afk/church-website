@@ -6,7 +6,7 @@
       <p class="hero-tagline"><%= church.tagline %></p>
     <% } %>
     <div class="hero-actions">
-      <a class="btn btn-gold" href="/visit"><%= church && church.hero_cta_label ? church.hero_cta_label : 'Plan a Visit' %></a>
+      <a class="btn btn-gold" href="/visit"><%= church && church.hero_cta_label ? church.hero_cta_label : 'Plan Your Visit' %></a>
       <a class="btn btn-ghost" href="/sermons">Watch a Sermon</a>
     </div>
   </div>
@@ -47,9 +47,13 @@
 
 <% if (church && church.service_times) { %>
   <section class="band band-navy reveal">
-    <p class="eyebrow">Gather with us</p>
-    <h2 class="section-title">Service Times</h2>
-    <p class="service-times prose-prewrap"><%= church.service_times %></p>
+    <div class="band-cols">
+      <div>
+        <p class="eyebrow">Gather with us</p>
+        <h2 class="section-title">Service Times</h2>
+      </div>
+      <p class="service-times prose-prewrap"><%= church.service_times %></p>
+    </div>
   </section>
 <% } %>
 
@@ -66,7 +70,7 @@
       <% latestSermons.forEach(function (s) { %>
         <a class="card sermon-card" href="/sermons/<%= s.id %>">
           <div class="thumb skeleton">
-            <img class="thumb-img" loading="lazy" src="https://img.youtube.com/vi/<%= s.youtube_id %>/hqdefault.jpg" alt="<%= s.title %>" onerror="this.src='/images/church-logo-placeholder.png'" />
+            <img class="thumb-img" loading="lazy" src="https://img.youtube.com/vi/<%= s.youtube_id %>/hqdefault.jpg" alt="<%= s.title %>" data-fallback="/images/church-logo-placeholder.png" />
           </div>
           <div class="card-body">
             <h3 class="card-title"><%= s.title %></h3>
@@ -92,13 +96,14 @@
   <% if (upcomingEvents && upcomingEvents.length) { %>
     <div class="card-grid reveal-group">
       <% upcomingEvents.forEach(function (e) { %>
-        <div class="card event-card">
+        <a class="card event-card" href="/events/<%= e.id %>">
           <div class="card-body">
             <h3 class="card-title"><%= e.title %></h3>
             <p class="card-meta"><%= fmtDate(e.date) %><% if (e.time) { %> &middot; <%= fmtTime(e.time) %><% } %></p>
             <% if (e.location) { %><p class="card-meta"><%= e.location %></p><% } %>
+            <span class="card-link next-step-arrow">Details &rarr;</span>
           </div>
-        </div>
+        </a>
       <% }) %>
     </div>
   <% } else { %>
@@ -121,8 +126,12 @@
 
 <% if (church && church.mission_statement) { %>
   <section class="band band-navy reveal">
-    <p class="eyebrow">Our mission</p>
-    <p class="mission prose-prewrap"><%= church.mission_statement %></p>
+    <div class="band-cols">
+      <div>
+        <p class="eyebrow">Our mission</p>
+      </div>
+      <p class="mission prose-prewrap"><%= church.mission_statement %></p>
+    </div>
   </section>
 <% } %>
 

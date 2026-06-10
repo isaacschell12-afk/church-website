@@ -8,10 +8,14 @@
 </section>
 
 <% if (church && church.sunday_school_schedule) { %>
-  <section class="band-navy reveal">
-    <p class="eyebrow">Gather with us</p>
-    <h2 class="section-title">When We Meet</h2>
-    <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
+  <section class="band band-navy reveal">
+    <div class="band-cols">
+      <div>
+        <p class="eyebrow">Gather with us</p>
+        <h2 class="section-title">When We Meet</h2>
+      </div>
+      <p class="service-times prose-prewrap"><%= church.sunday_school_schedule %></p>
+    </div>
   </section>
 <% } %>
 
