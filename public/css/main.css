@@ -335,7 +335,8 @@ main.page.admin section:last-child { margin-bottom: 0; }
 
 .nav-bar {
   display: flex; align-items: center; justify-content: space-between;
-  gap: var(--s3);
+  flex-wrap: wrap;
+  gap: 0 var(--s3);
   min-height: var(--header-h);
   position: relative;
   transition: min-height var(--dur-fast) var(--ease);
@@ -365,7 +366,8 @@ main.page.admin section:last-child { margin-bottom: 0; }
 .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
 .main-nav { display: none; flex-direction: column; gap: 0.15rem; padding: 0.5rem 0 1.25rem; }
-.main-nav.is-open { display: flex; }
+/* The open mobile menu takes the full row below the bar */
+.main-nav.is-open { display: flex; flex-basis: 100%; }
 .main-nav a {
   color: var(--ink); text-decoration: none; font-size: 1rem; font-weight: 500;
   padding: 0.7rem 0.25rem; border-bottom: 1px solid var(--line);
@@ -377,14 +379,27 @@ main.page.admin section:last-child { margin-bottom: 0; }
 .main-nav > a[aria-current="page"] { color: var(--gold-ink); font-weight: 600; }
 .admin-header .main-nav > a[aria-current="page"] { color: var(--gold-2); }
 .nav-cta { display: flex; gap: 0.6rem; padding-top: 0.85rem; }
+/* Header CTAs share the nav's type system — sentence case at link scale,
+   distinguished by their gold fill/outline rather than by shouting */
+.nav-cta .btn-sm {
+  text-transform: none;
+  letter-spacing: 0.015em;
+  font-size: clamp(0.86rem, 0.6rem + 0.45vw, 0.92rem);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+}
 .inline-form { display: inline; margin: 0; }
 
-@media (min-width: 880px) {
+@media (min-width: 940px) {
   .nav-toggle { display: none; }
-  .main-nav {
-    display: flex; flex-direction: row; align-items: center; gap: clamp(0.9rem, 2vw, 2rem); padding: 0;
+  .main-nav, .main-nav.is-open {
+    display: flex; flex-direction: row; align-items: center; flex-basis: auto;
+    gap: clamp(0.7rem, 1.6vw, 1.9rem); padding: 0;
   }
-  .main-nav > a { border-bottom: none; padding: 0.4rem 0; font-size: 0.95rem; letter-spacing: 0.01em; }
+  /* Fluid sizes + nowrap so the row always fits on one line — no link ever
+     breaks mid-label ("Sunday School") and the brand never stacks */
+  .main-nav > a { border-bottom: none; padding: 0.4rem 0; font-size: clamp(0.86rem, 0.6rem + 0.45vw, 0.95rem); letter-spacing: 0.01em; white-space: nowrap; }
+  .site-header .brand-name { white-space: nowrap; font-size: clamp(1rem, 0.6rem + 0.7vw, 1.22rem); }
   /* the admin nav carries many more items — compact it, let it wrap, and
      keep the brand lockup at its natural two-line width */
   .admin-header .brand { flex: none; }
