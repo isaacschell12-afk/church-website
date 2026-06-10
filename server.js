@@ -66,6 +66,11 @@ const REQUIRED_ENV = [
 const PORT = process.env.PORT;
 const isProd = process.env.NODE_ENV === 'production';
 
+// Cache-busting token for static assets (CSS/JS links in the layout). Static
+// files are served with a one-day cache; a fresh token per server start means
+// every deploy/restart serves fresh assets without anyone hard-refreshing.
+const ASSET_VERSION = Date.now().toString(36);
+
 const app = express();
 
 // Railway terminates TLS at a proxy; trust the first hop so req.ip and secure
@@ -148,6 +153,7 @@ app.use(
 // ── res.locals: church info, query params, date/time formatters ─────────────
 app.use(async (req, res, next) => {
   res.locals.query = req.query || {};
+  res.locals.assetV = ASSET_VERSION;
   res.locals.fmtDate = function (d) {
     if (!d) return '';
     const parts = String(d).slice(0, 10).split('-');
