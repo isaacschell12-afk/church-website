@@ -77,6 +77,16 @@ const app = express();
 // cookies behave correctly.
 app.set('trust proxy', 1);
 
+// Canonical host: 301 www.* to the apex so search engines and shared links
+// converge on a single hostname.
+app.use((req, res, next) => {
+  const host = (req.headers.host || '').toLowerCase();
+  if (host.startsWith('www.')) {
+    return res.redirect(301, `${req.protocol}://${host.slice(4)}${req.originalUrl}`);
+  }
+  next();
+});
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -154,6 +164,11 @@ app.use(
 app.use(async (req, res, next) => {
   res.locals.query = req.query || {};
   res.locals.assetV = ASSET_VERSION;
+  // Absolute origin for canonical URLs, Open Graph tags, and the sitemap.
+  // SITE_URL (optional) pins it in production; otherwise derived per-request.
+  res.locals.baseUrl = (process.env.SITE_URL || `${req.protocol}://${req.get('host')}`)
+    .replace(/\/+$/, '');
+  res.locals.reqPath = req.path;
   res.locals.fmtDate = function (d) {
     if (!d) return '';
     const parts = String(d).slice(0, 10).split('-');

@@ -12,6 +12,17 @@ function timezoneOf(church) {
   return (church && church.timezone) || 'America/New_York';
 }
 
+// Collapse whitespace and cap at ~160 chars for meta descriptions.
+function metaText(text, fallback) {
+  const t = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!t) return fallback || '';
+  return t.length > 158 ? `${t.slice(0, 157).trimEnd()}…` : t;
+}
+
+function churchName(church) {
+  return (church && church.church_name) || 'Our Church';
+}
+
 // GET / — Home
 router.get(
   '/',
@@ -37,6 +48,9 @@ router.get(
     res.render('layouts/main', {
       bodyPath: '../pages/home',
       title: (church && church.church_name) || 'Home',
+      metaDescription: metaText(
+        `${churchName(church)}${church && church.tagline ? ` — ${church.tagline}` : ''} Find service times, directions, recent sermons, and upcoming events.`
+      ),
       latestSermons: latestSermons.rows,
       upcomingEvents: upcomingEvents.rows,
       announcements: announcements.rows,
@@ -54,6 +68,10 @@ router.get(
     res.render('layouts/main', {
       bodyPath: '../pages/about',
       title: 'About Us',
+      metaDescription: metaText(
+        res.locals.church && res.locals.church.about,
+        `Our story, our heart, and the people who serve at ${churchName(res.locals.church)}.`
+      ),
       staff: staff.rows,
     });
   })
@@ -103,6 +121,9 @@ router.get(
     res.render('layouts/main', {
       bodyPath: '../pages/sermons',
       title: 'Sermons',
+      metaDescription: metaText(
+        `Watch and revisit recent sermons from ${churchName(res.locals.church)} — browse by title, speaker, and date.`
+      ),
       sermons: rows,
       search,
       page,
@@ -127,10 +148,19 @@ router.get(
         .status(404)
         .render('layouts/main', { bodyPath: '../pages/404', title: 'Not found' });
     }
+    const sermon = result.rows[0];
     res.render('layouts/main', {
       bodyPath: '../pages/sermon-detail',
-      title: result.rows[0].title,
-      sermon: result.rows[0],
+      title: sermon.title,
+      metaDescription: metaText(
+        sermon.description,
+        `A sermon by ${sermon.pastor} at ${churchName(res.locals.church)}.`
+      ),
+      ogType: 'article',
+      ogImage: sermon.youtube_id
+        ? `https://img.youtube.com/vi/${sermon.youtube_id}/hqdefault.jpg`
+        : null,
+      sermon,
     });
   })
 );
@@ -149,6 +179,9 @@ router.get(
     res.render('layouts/main', {
       bodyPath: '../pages/events',
       title: 'Events',
+      metaDescription: metaText(
+        `Upcoming events at ${churchName(res.locals.church)} — dates, times, and where to find us.`
+      ),
       events: result.rows,
     });
   })
@@ -170,10 +203,16 @@ router.get(
         .status(404)
         .render('layouts/main', { bodyPath: '../pages/404', title: 'Not found' });
     }
+    const event = result.rows[0];
     res.render('layouts/main', {
       bodyPath: '../pages/event-detail',
-      title: result.rows[0].title,
-      event: result.rows[0],
+      title: event.title,
+      metaDescription: metaText(
+        event.description,
+        `${event.title} at ${churchName(res.locals.church)}.`
+      ),
+      ogType: 'article',
+      event,
     });
   })
 );
@@ -186,6 +225,9 @@ router.get(
     res.render('layouts/main', {
       bodyPath: '../pages/ministries',
       title: 'Ministries',
+      metaDescription: metaText(
+        `The ministries of ${churchName(res.locals.church)} — find a place to serve, grow, and belong.`
+      ),
       ministries: result.rows,
     });
   })
@@ -196,6 +238,9 @@ router.get('/visit', (req, res) => {
   res.render('layouts/main', {
     bodyPath: '../pages/visit',
     title: 'Plan a Visit',
+    metaDescription: metaText(
+      `Planning your first visit to ${churchName(res.locals.church)}? What to expect, what to wear, where to park, and when we meet.`
+    ),
   });
 });
 
@@ -204,6 +249,9 @@ router.get('/beliefs', (req, res) => {
   res.render('layouts/main', {
     bodyPath: '../pages/beliefs',
     title: 'What We Believe',
+    metaDescription: metaText(
+      `The statement of faith of ${churchName(res.locals.church)} — what we believe and why it matters.`
+    ),
   });
 });
 
@@ -217,6 +265,10 @@ router.get(
     res.render('layouts/main', {
       bodyPath: '../pages/sunday-school',
       title: 'Sunday School',
+      metaDescription: metaText(
+        (res.locals.church && res.locals.church.sunday_school_intro),
+        `Sunday School classes for every age at ${churchName(res.locals.church)}.`
+      ),
       classes: classes.rows,
     });
   })
@@ -227,6 +279,9 @@ router.get('/give', (req, res) => {
   res.render('layouts/main', {
     bodyPath: '../pages/give',
     title: 'Give',
+    metaDescription: metaText(
+      `Give online to support the ministry of ${churchName(res.locals.church)}.`
+    ),
   });
 });
 
@@ -235,7 +290,71 @@ router.get('/contact', (req, res) => {
   res.render('layouts/main', {
     bodyPath: '../pages/contact',
     title: 'Contact',
+    metaDescription: metaText(
+      `Get in touch with ${churchName(res.locals.church)} — send a message, call, or visit.`
+    ),
   });
 });
+
+// ── SEO: robots.txt + sitemap.xml ────────────────────────────────────────────
+const SITEMAP_STATIC_PATHS = [
+  '/', '/about', '/beliefs', '/visit', '/sunday-school',
+  '/ministries', '/sermons', '/events', '/give', '/contact',
+];
+
+function xmlEscape(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+router.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send(
+    [
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /admin',
+      '',
+      `Sitemap: ${res.locals.baseUrl}/sitemap.xml`,
+      '',
+    ].join('\n')
+  );
+});
+
+router.get(
+  '/sitemap.xml',
+  catchAsync(async (req, res) => {
+    const base = res.locals.baseUrl;
+    const [sermons, events] = await Promise.all([
+      pool.query('SELECT id, last_modified FROM services ORDER BY id ASC'),
+      pool.query('SELECT id, last_modified FROM events ORDER BY id ASC'),
+    ]);
+
+    const urls = SITEMAP_STATIC_PATHS.map((p) => ({ loc: base + p }));
+    sermons.rows.forEach((r) =>
+      urls.push({ loc: `${base}/sermons/${r.id}`, lastmod: r.last_modified })
+    );
+    events.rows.forEach((r) =>
+      urls.push({ loc: `${base}/events/${r.id}`, lastmod: r.last_modified })
+    );
+
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...urls.map((u) => {
+        const lastmod = u.lastmod
+          ? `<lastmod>${new Date(u.lastmod).toISOString().slice(0, 10)}</lastmod>`
+          : '';
+        return `  <url><loc>${xmlEscape(u.loc)}</loc>${lastmod}</url>`;
+      }),
+      '</urlset>',
+      '',
+    ].join('\n');
+
+    res.type('application/xml').send(xml);
+  })
+);
 
 module.exports = router;

@@ -3,14 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= typeof title !== 'undefined' && title ? title : 'Church' %><% if (church && church.church_name) { %> — <%= church.church_name %><% } %></title>
-  <meta name="description" content="<%= church && church.church_name ? church.church_name : 'Our Church' %><% if (church && church.tagline) { %> — <%= church.tagline %><% } %>" />
+  <%
+    var siteName = church && church.church_name ? church.church_name : 'Our Church';
+    var rawTitle = typeof title !== 'undefined' && title ? title : 'Church';
+    var pageTitle = rawTitle === siteName ? siteName : rawTitle + ' — ' + siteName;
+    var pageDesc = (locals.metaDescription && String(metaDescription).trim())
+      || (siteName + (church && church.tagline ? ' — ' + church.tagline : ''));
+    var isAdminPath = !!(locals.reqPath && reqPath.indexOf('/admin') === 0);
+    var pageUrl = (locals.baseUrl || '') + (locals.reqPath || '/');
+  %>
+  <title><%= pageTitle %></title>
+  <meta name="description" content="<%= pageDesc %>" />
+  <% if (isAdminPath) { %>
+  <meta name="robots" content="noindex, nofollow" />
+  <% } else { %>
+  <link rel="canonical" href="<%= pageUrl %>" />
+  <meta property="og:site_name" content="<%= siteName %>" />
+  <meta property="og:type" content="<%= locals.ogType || 'website' %>" />
+  <meta property="og:title" content="<%= pageTitle %>" />
+  <meta property="og:description" content="<%= pageDesc %>" />
+  <meta property="og:url" content="<%= pageUrl %>" />
+  <% var shareImage = locals.ogImage || (church && church.logo_url) || null; %>
+  <% if (shareImage) { %>
+  <meta property="og:image" content="<%= shareImage %>" />
+  <% } %>
+  <meta name="twitter:card" content="<%= locals.ogImage ? 'summary_large_image' : 'summary' %>" />
+  <% } %>
   <meta name="csrf-token" content="<%= locals.csrfToken || '' %>" />
   <link rel="icon" href="<%= church && church.favicon_url ? church.favicon_url : '/images/favicon.ico' %>" />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-600.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-400-italic.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/inter-400.woff2" crossorigin />
   <link rel="stylesheet" href="/css/main.css?v=<%= locals.assetV || '0' %>" />
+  <% if (!isAdminPath && church) {
+    /* schema.org Church structured data — feeds "churches near me" search results.
+       A JSON-LD script is a data block, not executable, so the CSP does not apply. */
+    var churchLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Church',
+      name: siteName,
+      url: (locals.baseUrl || '') + '/',
+    };
+    if (church.address) churchLd.address = church.address;
+    if (church.phone) churchLd.telephone = church.phone;
+    if (church.email) churchLd.email = church.email;
+    if (church.logo_url) churchLd.logo = church.logo_url;
+    if (church.tagline) churchLd.slogan = church.tagline;
+  %>
+  <script type="application/ld+json"><%- JSON.stringify(churchLd).replace(/</g, '\\u003c') %></script>
+  <% } %>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
