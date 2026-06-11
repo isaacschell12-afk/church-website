@@ -873,7 +873,7 @@ textarea { resize: vertical; min-height: 7rem; }
 /* ── Dashboard stats ─────────────────────────────────────────────────────── */
 .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s2); margin-bottom: var(--s5); }
 @media (min-width: 760px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1080px) { .stat-grid { grid-template-columns: repeat(auto-fit, minmax(138px, 1fr)); } }
+@media (min-width: 1080px) { .stat-grid { grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); } }
 .stat {
   background: var(--paper); border: 1px solid var(--line); border-top: 2px solid var(--gold);
   border-radius: var(--r); padding: var(--s3) var(--s2); text-align: center;
@@ -881,7 +881,7 @@ textarea { resize: vertical; min-height: 7rem; }
 }
 .stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-1); }
 .stat-num { display: block; font-size: 2.4rem; font-weight: 600; color: var(--navy); font-family: 'Fraunces', serif; line-height: 1.1; }
-.stat-label { color: var(--ink-soft); font-size: var(--fs-xs); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+.stat-label { display: block; color: var(--ink-soft); font-size: var(--fs-xs); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; hyphens: auto; overflow-wrap: anywhere; }
 .quick-nav { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 
 /* ── Pagination ──────────────────────────────────────────────────────────── */
