@@ -15,13 +15,13 @@
       <tbody>
         <% rows.forEach(function (r) { %>
           <tr>
-            <td><%= r.title %></td>
-            <td><%= fmtDate(r.date) %></td>
-            <td><%= r.time ? fmtTime(r.time) : '' %></td>
-            <td><%= r.location || '' %></td>
+            <td data-label="Title"><%= r.title %></td>
+            <td data-label="Date"><%= fmtDate(r.date) %></td>
+            <td data-label="Time"><%= r.time ? fmtTime(r.time) : '' %></td>
+            <td data-label="Location"><%= r.location || '' %></td>
             <td class="row-actions">
               <a class="btn btn-outline btn-sm" href="/admin/events/<%= r.id %>/edit">Edit</a>
-              <a class="btn btn-danger btn-sm" href="/admin/events/<%= r.id %>/delete">Delete</a>
+              <a class="btn btn-line-danger btn-sm" href="/admin/events/<%= r.id %>/delete">Delete</a>
             </td>
           </tr>
         <% }) %>

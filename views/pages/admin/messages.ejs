@@ -1,0 +1,43 @@
+<section>
+  <div class="admin-bar">
+    <h1 class="page-title">Messages</h1>
+    <p class="page-indicator"><%= unread %> unread</p>
+  </div>
+
+  <% if (query && query.success) { %><p class="flash flash-success">Deleted successfully</p><% } %>
+  <% if (query && query.error) { %><p class="flash flash-error">There was a problem with that request</p><% } %>
+
+  <% if (rows && rows.length) { %>
+    <table class="admin-table">
+      <thead>
+        <tr><th>From</th><th>Received</th><th>Source</th><th>Message</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <% rows.forEach(function (m) { %>
+          <tr class="<%= m.is_read ? '' : 'is-unread' %>">
+            <td data-label="From">
+              <%= m.name %><br />
+              <span class="cell-sub"><%= m.email %></span>
+            </td>
+            <% var rcv = new Date(m.created_at); %>
+            <td data-label="Received"><%= rcv.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %> &middot; <%= rcv.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) %></td>
+            <td data-label="Source"><%= m.source || 'Contact form' %></td>
+            <td data-label="Message"><%= m.preview %><%= m.preview && m.preview.length >= 160 ? '…' : '' %></td>
+            <td class="row-actions">
+              <a class="btn btn-navy btn-sm" href="/admin/messages/<%= m.id %>"><%= m.is_read ? 'View' : 'Read' %></a>
+              <form class="inline-form" method="POST" action="/admin/messages/<%= m.id %>/toggle-read">
+                <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+                <button type="submit" class="btn btn-outline btn-sm"><%= m.is_read ? 'Mark unread' : 'Mark read' %></button>
+              </form>
+              <a class="btn btn-line-danger btn-sm" href="/admin/messages/<%= m.id %>/delete">Delete</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <%- include('./_pagination', { base: '/admin/messages', page: page, totalPages: totalPages }) %>
+  <% } else { %>
+    <p class="empty">No messages yet — contact and Plan a Visit submissions will appear here.</p>
+  <% } %>
+</section>

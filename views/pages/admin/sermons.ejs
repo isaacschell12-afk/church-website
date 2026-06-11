@@ -15,12 +15,12 @@
       <tbody>
         <% rows.forEach(function (r) { %>
           <tr>
-            <td><%= r.title %></td>
-            <td><%= fmtDate(r.date) %></td>
-            <td><%= r.pastor %></td>
+            <td data-label="Title"><%= r.title %></td>
+            <td data-label="Date"><%= fmtDate(r.date) %></td>
+            <td data-label="Pastor"><%= r.pastor %></td>
             <td class="row-actions">
               <a class="btn btn-outline btn-sm" href="/admin/sermons/<%= r.id %>/edit">Edit</a>
-              <a class="btn btn-danger btn-sm" href="/admin/sermons/<%= r.id %>/delete">Delete</a>
+              <a class="btn btn-line-danger btn-sm" href="/admin/sermons/<%= r.id %>/delete">Delete</a>
             </td>
           </tr>
         <% }) %>

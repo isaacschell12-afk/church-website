@@ -14,7 +14,18 @@ function sslConfig() {
   if (process.env.PGSSL === 'disable') return false;
   const url = process.env.DATABASE_URL || '';
   if (/@(localhost|127\.0\.0\.1)(:|\/)/.test(url)) return false;
-  return { rejectUnauthorized: false };
+  // Railway's private network (*.railway.internal) is not reachable by
+  // on-path attackers, and its Postgres presents a self-signed cert with no
+  // published CA, so skipping verification there is acceptable. PGSSL=no-verify
+  // allows the same as an explicit opt-in elsewhere (e.g. running migrations
+  // against the public proxy without a CA cert on hand).
+  if (process.env.PGSSL === 'no-verify') return { rejectUnauthorized: false };
+  if (/@[^/]*\.railway\.internal(:|\/)/.test(url)) return { rejectUnauthorized: false };
+  // Otherwise verify the server certificate. DATABASE_CA_CERT holds the
+  // provider's CA cert (PEM) when it isn't in the system trust store.
+  const ssl = { rejectUnauthorized: true };
+  if (process.env.DATABASE_CA_CERT) ssl.ca = process.env.DATABASE_CA_CERT;
+  return ssl;
 }
 
 const pool = new Pool({

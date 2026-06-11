@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS church_info (
   maps_embed_url   TEXT,
   giving_embed_url TEXT,
   give_intro       TEXT,
-  hero_cta_label   VARCHAR(50) DEFAULT 'Watch Latest Sermon',
+  hero_cta_label   VARCHAR(50) DEFAULT 'Plan Your Visit',
   logo_url         TEXT,
   favicon_url      TEXT
 );

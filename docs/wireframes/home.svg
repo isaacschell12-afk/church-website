@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1167.2" viewBox="0 0 900 1167.2" font-family="monospace">
+<rect width="900" height="1167.2" fill="#fdfdfd"/>
+<text x="16" y="28" font-size="15" font-weight="bold" font-family="monospace">Home — /</text>
+<rect x="16" y="46" width="868" height="56" fill="#fff" stroke="#444"/>
+<text x="26" y="66" font-size="11.5" font-family="monospace" fill="#222">HEADER — logo | nav links | Plan a Visit / Give CTAs</text>
+<rect x="16" y="110" width="868" height="168" fill="#fff" stroke="#444"/>
+<text x="26" y="130" font-size="11.5" font-family="monospace" fill="#222">HERO (navy) — eyebrow, church name (display), tagline, [Plan Your Visit] [Watch a Sermon]</text>
+<rect x="16" y="286" width="868" height="42" fill="#fff" stroke="#444"/>
+<text x="26" y="306" font-size="11.5" font-family="monospace" fill="#222">ANNOUNCEMENTS — gold-edged notice bars (conditional)</text>
+<text x="22" y="349" font-size="11" font-family="monospace" fill="#555">NEXT STEPS — 4 link cards</text>
+<rect x="16" y="354" width="211" height="84" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="121.5" y="396" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">I'm New</text>
+<rect x="235" y="354" width="211" height="84" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="340.5" y="396" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">Sunday School</text>
+<rect x="454" y="354" width="211" height="84" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="559.5" y="396" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">Ministries</text>
+<rect x="673" y="354" width="211" height="84" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="778.5" y="396" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">Messages</text>
+<rect x="16" y="446" width="868" height="70" fill="#fff" stroke="#444"/>
+<text x="26" y="466" font-size="11.5" font-family="monospace" fill="#222">SERVICE TIMES (navy band) — eyebrow, h2, times text</text>
+<rect x="16" y="524" width="868" height="33.6" fill="#fff" stroke="#444"/>
+<text x="26" y="544" font-size="11.5" font-family="monospace" fill="#222">LATEST SERMONS — section head + "view all" link</text>
+<rect x="16" y="565.6" width="284" height="98" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="158" y="614.6" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">sermon card (thumb 16:10 + title/meta)</text>
+<rect x="308" y="565.6" width="284" height="98" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="450" y="614.6" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">sermon card</text>
+<rect x="600" y="565.6" width="284" height="98" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="742" y="614.6" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">sermon card</text>
+<rect x="16" y="671.6" width="868" height="33.6" fill="#fff" stroke="#444"/>
+<text x="26" y="691.6" font-size="11.5" font-family="monospace" fill="#222">UPCOMING EVENTS — section head + "view all" link</text>
+<rect x="16" y="713.2" width="284" height="70" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="158" y="748.2" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">event card (title/date/place)</text>
+<rect x="308" y="713.2" width="284" height="70" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="450" y="748.2" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">event card</text>
+<rect x="600" y="713.2" width="284" height="70" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="742" y="748.2" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">event card</text>
+<rect x="16" y="791.2" width="868" height="70" fill="#fff" stroke="#444"/>
+<text x="26" y="811.2" font-size="11.5" font-family="monospace" fill="#222">SUNDAY SCHOOL SPOTLIGHT (band) — copy + [Explore Sunday School]</text>
+<rect x="16" y="869.2" width="868" height="56" fill="#fff" stroke="#444"/>
+<text x="26" y="889.2" font-size="11.5" font-family="monospace" fill="#222">MISSION (navy band) — eyebrow + mission statement</text>
+<rect x="16" y="933.2" width="868" height="84" fill="#fff" stroke="#444"/>
+<text x="26" y="953.2" font-size="11.5" font-family="monospace" fill="#222">GIVE CTA (centered band) — h2, lede, [Give Now]</text>
+<rect x="16" y="1025.2" width="868" height="84" fill="#fff" stroke="#444"/>
+<text x="26" y="1045.2" font-size="11.5" font-family="monospace" fill="#222">FOOTER — church + tagline | visit info | connect links | copyright</text>
+<text x="16" y="1131.2" font-size="11" font-family="sans-serif" font-style="italic" fill="#666">Landing page: welcome hero, quick next-step paths, service times, latest sermons and events, Sunday School</text>
+<text x="16" y="1146.2" font-size="11" font-family="sans-serif" font-style="italic" fill="#666">spotlight, mission, and giving call-to-action.</text>
+</svg>

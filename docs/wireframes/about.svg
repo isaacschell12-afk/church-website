@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="596.6" viewBox="0 0 900 596.6" font-family="monospace">
+<rect width="900" height="596.6" fill="#fdfdfd"/>
+<text x="16" y="28" font-size="15" font-weight="bold" font-family="monospace">About — /about</text>
+<rect x="16" y="46" width="868" height="56" fill="#fff" stroke="#444"/>
+<text x="26" y="66" font-size="11.5" font-family="monospace" fill="#222">HEADER — logo | nav links | Plan a Visit / Give CTAs</text>
+<rect x="16" y="110" width="868" height="98" fill="#fff" stroke="#444"/>
+<text x="26" y="130" font-size="11.5" font-family="monospace" fill="#222">PAGE INTRO — eyebrow, h1 "About Us", lede, [What We Believe]</text>
+<rect x="16" y="216" width="868" height="70" fill="#fff" stroke="#444"/>
+<text x="26" y="236" font-size="11.5" font-family="monospace" fill="#222">MISSION (navy band) — eyebrow, h2, mission text</text>
+<rect x="16" y="294" width="868" height="33.6" fill="#fff" stroke="#444"/>
+<text x="26" y="314" font-size="11.5" font-family="monospace" fill="#222">OUR TEAM — section head</text>
+<rect x="16" y="335.6" width="284" height="126" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="158" y="398.6" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">staff card (4:5 portrait + name/title/bio)</text>
+<rect x="308" y="335.6" width="284" height="126" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="450" y="398.6" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">staff card</text>
+<rect x="600" y="335.6" width="284" height="126" fill="#fafafa" stroke="#888" stroke-dasharray="4 3"/>
+<text x="742" y="398.6" font-size="10" font-family="monospace" fill="#333" text-anchor="middle">staff card</text>
+<rect x="16" y="469.6" width="868" height="84" fill="#fff" stroke="#444"/>
+<text x="26" y="489.6" font-size="11.5" font-family="monospace" fill="#222">FOOTER — church + tagline | visit info | connect links | copyright</text>
+<text x="16" y="575.6" font-size="11" font-family="sans-serif" font-style="italic" fill="#666">Who the church is: intro copy, mission statement, and staff/team cards with portraits.</text>
+</svg>

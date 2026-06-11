@@ -42,6 +42,7 @@ The server crashes on boot with a full list of any missing vars.
 | `PORT` | Railway injects this |
 | `DATABASE_URL` | Railway PostgreSQL addon |
 | `JWT_SECRET` | **min 32 chars** |
+| `CSRF_SECRET` | **min 32 chars** — must differ from `JWT_SECRET` |
 | `BACKUP_SECRET` | **min 64 chars** — used as the backup Bearer token |
 | `BACKUP_EMAIL` | weekly backup recipient |
 | `CHURCH_CONTACT_EMAIL` | contact-form recipient |
@@ -70,14 +71,15 @@ Copy `DATABASE_URL` from the Railway dashboard.
 **STEP 3 — Resend.** Free account at resend.com. Verify **`TMPCfamily.net`** as a sending
 domain (add the DKIM/SPF records in Cloudflare DNS once STEP 14 is done). Copy the API key.
 
-**STEP 4 — Generate secrets.** Run twice for `JWT_SECRET` and `BACKUP_SECRET`:
+**STEP 4 — Generate secrets.** Run once per secret for `JWT_SECRET`, `CSRF_SECRET`, and `BACKUP_SECRET`:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # JWT_SECRET
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # CSRF_SECRET
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"   # BACKUP_SECRET
 ```
 
-**STEP 5 — Set all 13 env variables** in the Railway dashboard. There is no
+**STEP 5 — Set all 14 env variables** in the Railway dashboard. There is no
 `SESSION_SECRET` — do not add one.
 
 **STEP 6 — Deploy.** Confirm `GET /health` returns `ok`. Check Railway logs confirm

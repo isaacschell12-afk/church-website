@@ -19,19 +19,19 @@
               <form class="inline-form" method="POST" action="/admin/staff/<%= r.id %>/move">
                 <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
                 <input type="hidden" name="direction" value="up" />
-                <button type="submit" class="btn btn-outline btn-sm" <%= i === 0 ? 'disabled' : '' %>>&uarr;</button>
+                <button type="submit" class="btn btn-outline btn-sm" aria-label="Move <%= r.name %> up" <%= i === 0 ? 'disabled' : '' %>>&uarr;</button>
               </form>
               <form class="inline-form" method="POST" action="/admin/staff/<%= r.id %>/move">
                 <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
                 <input type="hidden" name="direction" value="down" />
-                <button type="submit" class="btn btn-outline btn-sm" <%= i === rows.length - 1 ? 'disabled' : '' %>>&darr;</button>
+                <button type="submit" class="btn btn-outline btn-sm" aria-label="Move <%= r.name %> down" <%= i === rows.length - 1 ? 'disabled' : '' %>>&darr;</button>
               </form>
             </td>
-            <td><%= r.name %></td>
-            <td><%= r.title || '' %></td>
+            <td data-label="Name"><%= r.name %></td>
+            <td data-label="Title"><%= r.title || '' %></td>
             <td class="row-actions">
               <a class="btn btn-outline btn-sm" href="/admin/staff/<%= r.id %>/edit">Edit</a>
-              <a class="btn btn-danger btn-sm" href="/admin/staff/<%= r.id %>/delete">Delete</a>
+              <a class="btn btn-line-danger btn-sm" href="/admin/staff/<%= r.id %>/delete">Delete</a>
             </td>
           </tr>
         <% }) %>

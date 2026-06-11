@@ -4,6 +4,22 @@
 (function () {
   'use strict';
 
+  // ── Image fallbacks (CSP-safe replacement for inline onerror) ───────────
+  // Registered at top level (not DOMContentLoaded) because image errors can
+  // fire before the DOM is ready. Error events don't bubble, so use capture.
+  function applyFallback(img) {
+    if (img.tagName === 'IMG' && img.dataset.fallback && img.src !== location.origin + img.dataset.fallback) {
+      img.src = img.dataset.fallback;
+    }
+  }
+  document.addEventListener('error', function (e) {
+    applyFallback(e.target);
+  }, true);
+  // Sweep images that already failed before this script executed.
+  document.querySelectorAll('img[data-fallback]').forEach(function (img) {
+    if (img.complete && img.naturalWidth === 0) applyFallback(img);
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
     // ── Hamburger navigation ──────────────────────────────────────────────
     document.querySelectorAll('[data-nav-toggle]').forEach(function (btn) {
@@ -13,6 +29,16 @@
         var open = nav.classList.toggle('is-open');
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
+    });
+
+    // ── Mark the current page in the nav (presentation only) ──────────────
+    document.querySelectorAll('.main-nav > a[href]').forEach(function (a) {
+      var href = a.getAttribute('href');
+      // Roots ('/', '/admin') match exactly only, so they don't shadow subpages.
+      var isRoot = href === '/' || href === '/admin';
+      if (href === location.pathname || (!isRoot && location.pathname.indexOf(href + '/') === 0)) {
+        a.setAttribute('aria-current', 'page');
+      }
     });
 
     // ── Sticky header condense on scroll ──────────────────────────────────

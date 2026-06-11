@@ -15,12 +15,12 @@
       <tbody>
         <% rows.forEach(function (r) { %>
           <tr>
-            <td><%= r.message %></td>
-            <td><%= r.active ? 'Yes' : 'No' %></td>
-            <td><%= r.expiry_utc ? new Date(r.expiry_utc).toISOString() : '' %></td>
+            <td data-label="Message"><%= r.message %></td>
+            <td data-label="Active"><%= r.active ? 'Yes' : 'No' %></td>
+            <td data-label="Expires (UTC)"><%= r.expiry_utc ? new Date(r.expiry_utc).toISOString() : '' %></td>
             <td class="row-actions">
               <a class="btn btn-outline btn-sm" href="/admin/announcements/<%= r.id %>/edit">Edit</a>
-              <a class="btn btn-danger btn-sm" href="/admin/announcements/<%= r.id %>/delete">Delete</a>
+              <a class="btn btn-line-danger btn-sm" href="/admin/announcements/<%= r.id %>/delete">Delete</a>
             </td>
           </tr>
         <% }) %>

@@ -1,0 +1,23 @@
+<%
+/* Presentation-only renderer for admin-entered long-form text.
+   Splits on blank lines; a block's first line becomes a styled subhead when it
+   reads like a heading (short, single thought, no terminal punctuation).
+   Anything that doesn't match renders exactly as before (pre-line paragraph).
+   Locals: text (string), headTag ('h2'|'h3'|'h4', default 'h3'). */
+  var _txt = (typeof text === 'string' ? text : '') || '';
+  var _tag = (typeof headTag === 'string' && /^h[2-4]$/.test(headTag)) ? headTag : 'h3';
+  var _blocks = _txt.replace(/\r\n/g, '\n').split(/\n{2,}/);
+  function _isHeadLine(l) {
+    return l.length > 0 && l.length <= 48 && !/[.!?,;:]$/.test(l);
+  }
+%>
+<% _blocks.forEach(function (block) { %>
+  <% var t = block.trim(); if (!t) return; %>
+  <% var lines = t.split('\n'); var first = lines[0].trim(); var rest = lines.slice(1).join('\n').trim(); %>
+  <% if (_isHeadLine(first) && (lines.length === 1 || rest)) { %>
+    <% if (_tag === 'h2') { %><h2 class="prose-head"><%= first %></h2><% } else if (_tag === 'h4') { %><h4 class="prose-head"><%= first %></h4><% } else { %><h3 class="prose-head"><%= first %></h3><% } %>
+    <% if (rest) { %><p class="prose-prewrap"><%= rest %></p><% } %>
+  <% } else { %>
+    <p class="prose-prewrap"><%= t %></p>
+  <% } %>
+<% }) %>
