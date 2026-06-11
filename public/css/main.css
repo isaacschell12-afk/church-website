@@ -988,3 +988,34 @@ p.back-link { display: block; }
 @supports not (background: color-mix(in srgb, white 50%, transparent)) {
   .site-header { background: var(--paper); }
 }
+
+/* ── Finishing layer ─────────────────────────────────────────────────────── */
+/* Themed scrollbar — paper track, gold thumb */
+html { scrollbar-color: var(--gold) var(--paper-2); }
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: var(--paper-2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border: 3px solid var(--paper-2); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-2); }
+
+/* Avoid single-word orphan lines in running text (progressive enhancement) */
+.prose p, .prose-prewrap, .lede, .card-bio, .card-meta { text-wrap: pretty; }
+
+/* Gold hairline beneath the footer statement — echoes the page-title rules */
+.footer-statement::after {
+  content: ''; display: block; width: 44px; height: 2px;
+  background: var(--gold); margin-top: clamp(1.2rem, 2.5vw, 1.8rem);
+}
+
+/* ── Print: sermons, events, and visit details on white, without site chrome ─ */
+@media print {
+  html, body { background: #fff; }
+  body { color: #000; font-size: 11pt; }
+  .site-header, .site-footer, .skip-link, .nav-cta, .next-steps,
+  .btn, .give-cta, .admin-header { display: none !important; }
+  .reveal-armed, .reveal-group.reveal-armed > * { opacity: 1 !important; transform: none !important; }
+  main.page { padding: 0; }
+  .hero, .section--navy, .band-navy { background: #fff !important; color: #000 !important; }
+  a { color: #000; text-decoration: underline; }
+  .prose a[href^="http"]::after { content: ' (' attr(href) ')'; font-size: 0.85em; color: #444; }
+  .card, .stat { box-shadow: none !important; break-inside: avoid; }
+}
