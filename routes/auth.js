@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const express = require('express');
 const { rateLimit } = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
@@ -15,6 +16,14 @@ const router = express.Router();
 const DUMMY_HASH = '$2b$12$invalidhashfortimingnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn';
 
 const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+
+// Constant-time string comparison. Hashing both sides first yields equal-length
+// buffers so crypto.timingSafeEqual can be used regardless of input lengths.
+function timingSafeStringEqual(a, b) {
+  const hashA = crypto.createHash('sha256').update(a).digest();
+  const hashB = crypto.createHash('sha256').update(b).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
 
 function cookieOptions() {
   return {
@@ -58,7 +67,7 @@ router.post(
     const password = typeof req.body.password === 'string' ? req.body.password : '';
 
     const result = await pool.query(
-      'SELECT id, username, hashed_password, role FROM admins WHERE username = $1',
+      'SELECT id, username, hashed_password, role, token_version FROM admins WHERE username = $1',
       [username]
     );
     const admin = result.rows[0];
@@ -76,8 +85,15 @@ router.post(
       return res.redirect('/admin/login?error=1');
     }
 
+    // token_version enables server-side revocation: the auth middleware rejects
+    // tokens whose version no longer matches the admins row.
     const token = jwt.sign(
-      { id: admin.id, username: admin.username, role: admin.role },
+      {
+        id: admin.id,
+        username: admin.username,
+        role: admin.role,
+        token_version: admin.token_version,
+      },
       process.env.JWT_SECRET,
       { expiresIn: '8h' }
     );
@@ -117,7 +133,7 @@ router.post(
     const { resetToken, username, newPassword } = parsed.data;
 
     const expected = process.env.ADMIN_RESET_TOKEN;
-    if (!expected || resetToken !== expected) {
+    if (!expected || !timingSafeStringEqual(resetToken, expected)) {
       console.error(
         `[${new Date().toISOString()}] reset-password token mismatch for username="${username}"`
       );
@@ -125,8 +141,10 @@ router.post(
     }
 
     const hashed = await bcrypt.hash(newPassword, 12);
+    // Bump token_version so all previously issued JWTs for this admin are
+    // revoked — resetting a compromised account must end existing sessions.
     const update = await pool.query(
-      'UPDATE admins SET hashed_password = $1 WHERE username = $2 RETURNING id',
+      'UPDATE admins SET hashed_password = $1, token_version = token_version + 1 WHERE username = $2 RETURNING id',
       [hashed, username]
     );
 

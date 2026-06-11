@@ -36,7 +36,7 @@ router.get(
 
     res.render('layouts/main', {
       bodyPath: '../pages/home',
-      title: church.church_name || 'Home',
+      title: (church && church.church_name) || 'Home',
       latestSermons: latestSermons.rows,
       upcomingEvents: upcomingEvents.rows,
       announcements: announcements.rows,
@@ -150,6 +150,30 @@ router.get(
       bodyPath: '../pages/events',
       title: 'Events',
       events: result.rows,
+    });
+  })
+);
+
+// GET /events/:id — event detail
+router.get(
+  '/events/:id',
+  catchAsync(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id)) {
+      return res
+        .status(404)
+        .render('layouts/main', { bodyPath: '../pages/404', title: 'Not found' });
+    }
+    const result = await pool.query('SELECT * FROM events WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .render('layouts/main', { bodyPath: '../pages/404', title: 'Not found' });
+    }
+    res.render('layouts/main', {
+      bodyPath: '../pages/event-detail',
+      title: result.rows[0].title,
+      event: result.rows[0],
     });
   })
 );

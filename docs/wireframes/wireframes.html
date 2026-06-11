@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMPC — Wireframes</title>
+<style>
+body{font-family:monospace;background:#f4f4f4;margin:0;padding:2rem;color:#222}
+h1{font-size:1.4rem} h2{font-size:1.05rem;margin:0 0 .75rem} code{color:#666;font-weight:normal}
+section{background:#fff;border:1px solid #bbb;max-width:860px;margin:0 auto 3rem;padding:1.25rem}
+.box{border:1px solid #555;background:#fff;margin-bottom:8px;display:flex;align-items:center;padding:0 10px;font-size:12px}
+.cols{display:flex;gap:8px;margin-bottom:8px}
+.col{flex:1;border-style:dashed;border-color:#888;background:#fafafa;justify-content:center;text-align:center}
+.grouplabel{font-size:11px;color:#555;margin:2px 0 4px}
+.caption{font-style:italic;color:#666;font-size:12px;font-family:sans-serif;margin:10px 0 0}
+</style></head><body>
+<h1>Taylor Mill Pentecostal Church — page wireframes (structure only)</h1>
+<p style="max-width:860px;margin:0 auto 2rem;font-size:12px;color:#555">Boxes show layout regions, not visual styling. Solid = full-width region; dashed = grid items. Generated from the final audited templates.</p>
+<section>
+<h2>Home <code>/</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:132px">HERO (navy) — eyebrow, church name (display), tagline, [Plan Your Visit] [Watch a Sermon]</div>
+<div class="box" style="height:33px">ANNOUNCEMENTS — gold-edged notice bars (conditional)</div>
+<div class="grouplabel">NEXT STEPS — 4 link cards</div><div class="cols"><div class="box col" style="height:66px">I'm New</div><div class="box col" style="height:66px">Sunday School</div><div class="box col" style="height:66px">Ministries</div><div class="box col" style="height:66px">Messages</div></div>
+<div class="box" style="height:55px">SERVICE TIMES (navy band) — eyebrow, h2, times text</div>
+<div class="box" style="height:26.4px">LATEST SERMONS — section head + "view all" link</div>
+<div class="cols"><div class="box col" style="height:77px">sermon card (thumb 16:10 + title/meta)</div><div class="box col" style="height:77px">sermon card</div><div class="box col" style="height:77px">sermon card</div></div>
+<div class="box" style="height:26.4px">UPCOMING EVENTS — section head + "view all" link</div>
+<div class="cols"><div class="box col" style="height:55px">event card (title/date/place)</div><div class="box col" style="height:55px">event card</div><div class="box col" style="height:55px">event card</div></div>
+<div class="box" style="height:55px">SUNDAY SCHOOL SPOTLIGHT (band) — copy + [Explore Sunday School]</div>
+<div class="box" style="height:44px">MISSION (navy band) — eyebrow + mission statement</div>
+<div class="box" style="height:66px">GIVE CTA (centered band) — h2, lede, [Give Now]</div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Landing page: welcome hero, quick next-step paths, service times, latest sermons and events, Sunday School spotlight, mission, and giving call-to-action.</p>
+</section>
+<section>
+<h2>About <code>/about</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:77px">PAGE INTRO — eyebrow, h1 "About Us", lede, [What We Believe]</div>
+<div class="box" style="height:55px">MISSION (navy band) — eyebrow, h2, mission text</div>
+<div class="box" style="height:26.4px">OUR TEAM — section head</div>
+<div class="cols"><div class="box col" style="height:99px">staff card (4:5 portrait + name/title/bio)</div><div class="box col" style="height:99px">staff card</div><div class="box col" style="height:99px">staff card</div></div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Who the church is: intro copy, mission statement, and staff/team cards with portraits.</p>
+</section>
+<section>
+<h2>What We Believe <code>/beliefs</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:66px">PAGE INTRO — eyebrow, h1 "What We Believe", lede</div>
+<div class="box" style="height:132px">STATEMENT OF FAITH — prose column (max 66ch)</div>
+<div class="box" style="height:66px">VISIT CTA (centered band) — h2, copy, [Plan your visit]</div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Statement of faith as long-form prose, ending in an invitation to visit.</p>
+</section>
+<section>
+<h2>Sunday School <code>/sunday-school</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:66px">PAGE INTRO — eyebrow, h1 "Sunday School", lede</div>
+<div class="box" style="height:55px">WHEN WE MEET (navy band) — eyebrow, h2, schedule</div>
+<div class="box" style="height:26.4px">OUR CLASSES — section head</div>
+<div class="cols"><div class="box col" style="height:77px">class card (name/ages/room/teacher)</div><div class="box col" style="height:77px">class card</div><div class="box col" style="height:77px">class card</div></div>
+<div class="box" style="height:66px">VISIT CTA (centered band) — h2, copy, [Plan a Visit]</div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Sunday School overview: intro, meeting schedule, class cards by age group, and a visit invitation.</p>
+</section>
+<section>
+<h2>Ministries <code>/ministries</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:66px">PAGE INTRO — eyebrow, h1 "Ministries", lede</div>
+<div class="cols"><div class="box col" style="height:99px">ministry card (16:10 image + name/desc/leader/email)</div><div class="box col" style="height:99px">ministry card</div><div class="box col" style="height:99px">ministry card</div></div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Directory of ministries: image cards with description, leader, and contact email.</p>
+</section>
+<section>
+<h2>Sermons <code>/sermons</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:55px">PAGE INTRO — eyebrow, h1 "Sermons", lede</div>
+<div class="box" style="height:33px">SEARCH FORM — [ text input          ] [Search]</div>
+<div class="cols"><div class="box col" style="height:77px">sermon card (thumb + title/pastor/date)</div><div class="box col" style="height:77px">sermon card</div><div class="box col" style="height:77px">sermon card</div></div>
+<div class="box" style="height:33px">PAGINATION — [Previous]  Page X of Y  [Next]</div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Searchable sermon archive: search bar, YouTube-thumbnail cards, and pagination.</p>
+</section>
+<section>
+<h2>Sermon Detail <code>/sermon-detail</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:22px">← Back to sermons</div>
+<div class="box" style="height:55px">TITLE BLOCK — eyebrow, h1 sermon title, pastor · date</div>
+<div class="box" style="height:132px">VIDEO EMBED — 16:9 YouTube iframe (navy fallback)</div>
+<div class="box" style="height:66px">DESCRIPTION — prose column</div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Single sermon: back link, title and meta, embedded 16:9 video, and description.</p>
+</section>
+<section>
+<h2>Events <code>/events</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:66px">PAGE INTRO — eyebrow, h1 "Events", lede, rule</div>
+<div class="cols"><div class="box col" style="height:77px">event card (title/date·time/place/desc)</div><div class="box col" style="height:77px">event card</div><div class="box col" style="height:77px">event card</div></div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Upcoming events listed as cards with date, time, location, and description.</p>
+</section>
+<section>
+<h2>Give <code>/give</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:66px">PAGE INTRO — eyebrow, h1 "Give", lede</div>
+<div class="box" style="height:132px">GIVING EMBED — 16:9 iframe (portal) + fallback link</div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Online giving: intro copy and an embedded giving-portal iframe with a fallback link.</p>
+</section>
+<section>
+<h2>Plan a Visit <code>/visit</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:55px">PAGE INTRO — eyebrow, h1 "Plan a Visit", lede, flash (cond.)</div>
+<div class="cols"><div class="box col" style="height:132px">WHAT TO EXPECT — prose, service times, address</div><div class="box col" style="height:132px">CONTACT FORM — name / email / message / [I'm Planning to Visit]</div></div>
+<div class="box" style="height:88px">MAP EMBED — 16:8 map iframe</div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">First-time visitor page: what to expect, service times and address, an "I'm coming" form, and a map.</p>
+</section>
+<section>
+<h2>Contact <code>/contact</code></h2>
+<div class="box" style="height:44px">HEADER — logo | nav links | Plan a Visit / Give CTAs</div>
+<div class="box" style="height:55px">PAGE INTRO — eyebrow, h1 "Contact", lede, flash (cond.)</div>
+<div class="cols"><div class="box col" style="height:132px">CONTACT INFO — address / phone / email / times</div><div class="box col" style="height:132px">CONTACT FORM — name / email / message / [Send Message]</div></div>
+<div class="box" style="height:88px">MAP EMBED — 16:8 map iframe</div>
+<div class="box" style="height:66px">FOOTER — church + tagline | visit info | connect links | copyright</div>
+<p class="caption">Contact page: address, phone, email, service times beside a message form, with a map below.</p>
+</section>
+<section>
+<h2>Admin Login <code>/admin-login</code></h2>
+<div class="box" style="height:44px">ADMIN HEADER — brand | section links | View site | Log out</div>
+<div class="box" style="height:110px">AUTH CARD (centered, 420px) — h1, username, password, [Log In]</div>
+<p class="caption">Authentication: centered narrow card with username/password form. No public footer.</p>
+</section>
+<section>
+<h2>Admin Dashboard <code>/admin-dashboard</code></h2>
+<div class="box" style="height:44px">ADMIN HEADER — brand | section links | View site | Log out</div>
+<div class="box" style="height:26.4px">h1 "Dashboard"</div>
+<div class="grouplabel">STAT GRID</div><div class="cols"><div class="box col" style="height:55px">Sermons</div><div class="box col" style="height:55px">Events</div><div class="box col" style="height:55px">Ministries</div><div class="box col" style="height:55px">Staff</div><div class="box col" style="height:55px">S. School</div><div class="box col" style="height:55px">Announce.</div></div>
+<div class="box" style="height:39.6px">MANAGE — quick-nav buttons (Sermons, Events, Ministries, …)</div>
+<p class="caption">Admin home: six content-count stat tiles and quick-nav buttons to each manager.</p>
+</section>
+<section>
+<h2>Admin List (Sermons/Events/Staff/…) <code>/admin-list</code></h2>
+<div class="box" style="height:44px">ADMIN HEADER — brand | section links | View site | Log out</div>
+<div class="box" style="height:33px">ADMIN BAR — h1 section name | [Add New]</div>
+<div class="box" style="height:22px">FLASH — success / error notice (conditional)</div>
+<div class="box" style="height:110px">DATA TABLE — th row + data rows, each with [Edit] [Delete]</div>
+<div class="box" style="height:33px">PAGINATION — [Previous]  Page X of Y  [Next]</div>
+<p class="caption">Shared manager layout: title + Add New, flash messages, data table with row actions, pagination. Table stacks to labeled blocks under 680px.</p>
+</section>
+<section>
+<h2>Admin Form (add/edit record) <code>/admin-form</code></h2>
+<div class="box" style="height:44px">ADMIN HEADER — brand | section links | View site | Log out</div>
+<div class="box" style="height:22px">← Back to &lt;section&gt;</div>
+<div class="box" style="height:26.4px">h1 "Add / Edit …"</div>
+<div class="box" style="height:121px">FORM — stacked label+input fields, upload controls, notes</div>
+<div class="box" style="height:22px">[Save] submit button</div>
+<p class="caption">Shared create/edit layout: back link, title, stacked labeled fields (640px max), optional upload row, submit button.</p>
+</section>
+</body></html>

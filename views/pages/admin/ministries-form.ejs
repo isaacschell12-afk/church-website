@@ -1,5 +1,5 @@
 <section>
-  <a class="btn btn-outline back-link" href="/admin/ministries">&larr; Back to ministries</a>
+  <a class="content-link back-link" href="/admin/ministries">&larr; Back to ministries</a>
   <h1 class="page-title"><%= mode === 'edit' ? 'Edit Ministry' : 'New Ministry' %></h1>
 
   <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
@@ -27,7 +27,7 @@
     <div class="upload-controls" data-upload-for="image_url">
       <input type="file" class="upload-file" accept="image/*" data-upload-input />
       <button type="button" class="btn btn-outline" data-upload-button>Upload Image</button>
-      <span class="upload-status" data-upload-status></span>
+      <span class="upload-status" role="status" data-upload-status></span>
     </div>
 
     <button type="submit" class="btn btn-navy">Save</button>
