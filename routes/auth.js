@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const pool = require('../db/pool');
+const auth = require('../middleware/auth');
 const catchAsync = require('../middleware/catchAsync');
 
 const router = express.Router();
@@ -111,6 +112,79 @@ router.post('/admin/logout', (req, res) => {
   });
   res.redirect('/admin/login');
 });
+
+// ── Account: change your own password (any signed-in admin) ─────────────────
+const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1),
+    new_password: z.string().min(12).max(200),
+    confirm_password: z.string().min(1),
+  })
+  .refine((d) => d.new_password === d.confirm_password, { message: 'Passwords do not match' });
+
+// GET /admin/account
+router.get('/admin/account', auth, (req, res) => {
+  res.render('layouts/main', {
+    bodyPath: '../pages/admin/account',
+    title: 'My Account',
+    admin: true,
+  });
+});
+
+// POST /admin/account/password
+router.post(
+  '/admin/account/password',
+  auth,
+  loginLimiter,
+  catchAsync(async (req, res) => {
+    const parsed = changePasswordSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      const mismatch = parsed.error.issues.some((i) => i.message === 'Passwords do not match');
+      return res.redirect(`/admin/account?error=${mismatch ? 'mismatch' : 'invalid'}`);
+    }
+    const { current_password, new_password } = parsed.data;
+
+    const result = await pool.query(
+      'SELECT hashed_password FROM admins WHERE id = $1',
+      [req.user.id]
+    );
+    const row = result.rows[0];
+    let valid = false;
+    try {
+      valid = await bcrypt.compare(current_password, row ? row.hashed_password : DUMMY_HASH);
+    } catch (err) {
+      valid = false;
+    }
+    if (!row || !valid) {
+      return res.redirect('/admin/account?error=wrongpassword');
+    }
+
+    const hashed = await bcrypt.hash(new_password, 12);
+    // Bumping token_version revokes every existing session for this admin —
+    // including the cookie that made this request — so issue a fresh token
+    // against the new version to keep this session signed in.
+    const update = await pool.query(
+      'UPDATE admins SET hashed_password = $1, token_version = token_version + 1 WHERE id = $2 RETURNING username, role, token_version',
+      [hashed, req.user.id]
+    );
+    const admin = update.rows[0];
+    const token = jwt.sign(
+      {
+        id: req.user.id,
+        username: admin.username,
+        role: admin.role,
+        token_version: admin.token_version,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+    res.cookie('token', token, cookieOptions());
+    console.log(
+      `[${new Date().toISOString()}] password changed for username="${admin.username}"`
+    );
+    return res.redirect('/admin/account?success=1');
+  })
+);
 
 // POST /admin/auth/reset-password
 // Machine endpoint authenticated by the ADMIN_RESET_TOKEN env var (see README STEP 12).

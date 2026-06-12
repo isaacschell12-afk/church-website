@@ -132,6 +132,50 @@ router.get(
   })
 );
 
+// GET /sermons/feed.xml — RSS 2.0 feed of the latest sermons.
+// Registered before /sermons/:id so "feed.xml" is never parsed as an id.
+router.get(
+  '/sermons/feed.xml',
+  catchAsync(async (req, res) => {
+    const base = res.locals.baseUrl;
+    const name = churchName(res.locals.church);
+    const result = await pool.query(
+      'SELECT id, title, pastor, description, date, last_modified FROM services ORDER BY date DESC, id DESC LIMIT 20'
+    );
+
+    const items = result.rows.map((s) => {
+      const link = `${base}/sermons/${s.id}`;
+      const desc = metaText(s.description, `A sermon by ${s.pastor}.`);
+      return [
+        '    <item>',
+        `      <title>${xmlEscape(s.title)}</title>`,
+        `      <link>${xmlEscape(link)}</link>`,
+        `      <guid isPermaLink="true">${xmlEscape(link)}</guid>`,
+        `      <pubDate>${new Date(s.date).toUTCString()}</pubDate>`,
+        `      <description>${xmlEscape(`${desc} — ${s.pastor}`)}</description>`,
+        '    </item>',
+      ].join('\n');
+    });
+
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+      '  <channel>',
+      `    <title>${xmlEscape(`${name} — Sermons`)}</title>`,
+      `    <link>${xmlEscape(`${base}/sermons`)}</link>`,
+      `    <atom:link href="${xmlEscape(`${base}/sermons/feed.xml`)}" rel="self" type="application/rss+xml" />`,
+      `    <description>${xmlEscape(`Recent sermons from ${name}.`)}</description>`,
+      '    <language>en-us</language>',
+      ...items,
+      '  </channel>',
+      '</rss>',
+      '',
+    ].join('\n');
+
+    res.type('application/rss+xml').send(xml);
+  })
+);
+
 // GET /sermons/:id
 router.get(
   '/sermons/:id',
@@ -184,6 +228,81 @@ router.get(
       ),
       events: result.rows,
     });
+  })
+);
+
+// GET /events.ics — iCalendar feed of upcoming events, so anyone can subscribe
+// from Google/Apple/Outlook calendars.
+function icsEscape(s) {
+  return String(s)
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r?\n/g, '\\n');
+}
+
+// RFC 5545 lines must stay within 75 octets; continuation lines start with a space.
+function icsFold(line) {
+  const out = [];
+  let rest = line;
+  while (rest.length > 74) {
+    out.push(rest.slice(0, 74));
+    rest = ` ${rest.slice(74)}`;
+  }
+  out.push(rest);
+  return out.join('\r\n');
+}
+
+router.get(
+  '/events.ics',
+  catchAsync(async (req, res) => {
+    const church = res.locals.church;
+    const tz = timezoneOf(church);
+    const result = await pool.query(
+      `SELECT * FROM events
+       WHERE date >= (NOW() AT TIME ZONE $1)::DATE
+       ORDER BY date ASC`,
+      [tz]
+    );
+
+    const host = res.locals.baseUrl.replace(/^https?:\/\//, '');
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      `PRODID:-//${icsEscape(churchName(church))}//Events//EN`,
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      `X-WR-CALNAME:${icsEscape(`${churchName(church)} Events`)}`,
+    ];
+
+    result.rows.forEach((e) => {
+      const ymd = String(e.date).slice(0, 10).replace(/-/g, '');
+      const stamp = new Date(e.last_modified || e.created_at || Date.now())
+        .toISOString()
+        .replace(/[-:]/g, '')
+        .replace(/\.\d{3}/, '');
+      lines.push('BEGIN:VEVENT');
+      lines.push(`UID:event-${e.id}@${host}`);
+      lines.push(`DTSTAMP:${stamp}`);
+      if (e.time) {
+        const hms = String(e.time).slice(0, 8).replace(/:/g, '');
+        lines.push(`DTSTART;TZID=${tz}:${ymd}T${hms}`);
+      } else {
+        // No time recorded — publish as an all-day event.
+        lines.push(`DTSTART;VALUE=DATE:${ymd}`);
+      }
+      lines.push(`SUMMARY:${icsEscape(e.title)}`);
+      if (e.location) lines.push(`LOCATION:${icsEscape(e.location)}`);
+      if (e.description) lines.push(`DESCRIPTION:${icsEscape(e.description)}`);
+      lines.push(`URL:${res.locals.baseUrl}/events/${e.id}`);
+      lines.push('END:VEVENT');
+    });
+
+    lines.push('END:VCALENDAR');
+    res
+      .type('text/calendar')
+      .setHeader('Content-Disposition', 'inline; filename="events.ics"');
+    res.send(`${lines.map(icsFold).join('\r\n')}\r\n`);
   })
 );
 

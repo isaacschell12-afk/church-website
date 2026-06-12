@@ -21,6 +21,7 @@
         <a href="/admin/church">Church</a>
         <a href="/admin/users">Users</a>
       <% } %>
+      <a href="/admin/account">Account</a>
       <a href="/" target="_blank" rel="noopener">View site</a>
       <form class="inline-form" method="POST" action="/admin/logout">
         <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
