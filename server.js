@@ -310,6 +310,21 @@ async function start() {
     );
   }
 
+  // Prune activity-log rows older than 90 days — enough history for the board,
+  // bounded enough to never matter for storage.
+  try {
+    const pruned = await pool.query(
+      "DELETE FROM activity_log WHERE created_at < NOW() - INTERVAL '90 days'"
+    );
+    console.log(
+      `[${new Date().toISOString()}] pruned ${pruned.rowCount} old activity_log rows`
+    );
+  } catch (err) {
+    console.error(
+      `[${new Date().toISOString()}] activity_log prune skipped: ${err.message}`
+    );
+  }
+
   const server = app.listen(PORT, () => {
     console.log(`[${new Date().toISOString()}] server listening on port ${PORT}`);
   });

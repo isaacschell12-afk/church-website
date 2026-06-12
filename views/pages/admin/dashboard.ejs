@@ -32,6 +32,25 @@
     <% } %>
   </div>
 
+  <% if (recentActivity && recentActivity.length) { %>
+    <hr class="rule" />
+    <h2 class="section-title">Recent Activity</h2>
+    <table class="admin-table">
+      <thead>
+        <tr><th>When</th><th>Who</th><th>What</th></tr>
+      </thead>
+      <tbody>
+        <% recentActivity.forEach(function (a) { %>
+          <tr>
+            <td data-label="When"><%= new Date(a.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></td>
+            <td data-label="Who"><%= a.username %></td>
+            <td data-label="What"><%= a.action %> <%= a.entity %><%= a.label ? ' — ' + a.label : '' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+
   <% if (locals.user && user.role === 'superadmin') { %>
     <hr class="rule" />
     <h2 class="section-title">Backups</h2>
@@ -43,7 +62,7 @@
     <% if (recentBackups && recentBackups.length) { %>
       <table class="admin-table backup-table">
         <thead>
-          <tr><th>Backup</th><th>Created</th><th>Emailed</th></tr>
+          <tr><th>Backup</th><th>Created</th><th>Emailed</th><th>Actions</th></tr>
         </thead>
         <tbody>
           <% recentBackups.forEach(function (b) { %>
@@ -51,6 +70,7 @@
               <td data-label="Backup">#<%= b.id %></td>
               <td data-label="Created"><%= new Date(b.created_at).toLocaleString('en-US') %></td>
               <td data-label="Emailed"><%= b.email_sent ? 'Yes' : 'No' %></td>
+              <td class="row-actions"><a class="btn btn-outline btn-sm" href="/admin/backups/<%= b.id %>/download">Download</a></td>
             </tr>
           <% }) %>
         </tbody>

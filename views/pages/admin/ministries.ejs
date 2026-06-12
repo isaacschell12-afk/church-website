@@ -7,6 +7,8 @@
   <% if (query && query.success) { %><p class="flash flash-success">Saved successfully</p><% } %>
   <% if (query && query.error) { %><p class="flash flash-error">There was a problem with that request</p><% } %>
 
+  <%- include('./_search') %>
+
   <% if (rows && rows.length) { %>
     <table class="admin-table">
       <thead>
@@ -29,6 +31,6 @@
 
     <%- include('./_pagination', { base: '/admin/ministries', page: page, totalPages: totalPages }) %>
   <% } else { %>
-    <p class="empty">No ministries yet.</p>
+    <p class="empty"><%= locals.q ? 'No ministries match your search.' : 'No ministries yet.' %></p>
   <% } %>
 </section>
