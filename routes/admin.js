@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const pool = require('../db/pool');
 const runBackup = require('../db/runBackup');
+const logActivity = require('../db/logActivity');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/role');
 const catchAsync = require('../middleware/catchAsync');
@@ -85,6 +86,9 @@ const ENTITIES = {
     title: 'Sermons',
     label: (r) => r.title,
     listOrder: 'ORDER BY date DESC, id DESC',
+    searchSql: '(title ILIKE $1 OR pastor ILIKE $1)',
+    searchHint: 'Search by title or pastor',
+    duplicable: true,
     columns: ['title', 'date', 'pastor', 'description', 'youtube_id'],
     displayFields: [
       { key: 'title', label: 'Title' },
@@ -112,6 +116,9 @@ const ENTITIES = {
     title: 'Events',
     label: (r) => r.title,
     listOrder: 'ORDER BY date DESC, id DESC',
+    searchSql: '(title ILIKE $1 OR location ILIKE $1)',
+    searchHint: 'Search by title or location',
+    duplicable: true,
     columns: ['title', 'date', 'time', 'location', 'description'],
     displayFields: [
       { key: 'title', label: 'Title' },
@@ -139,6 +146,8 @@ const ENTITIES = {
     title: 'Ministries',
     label: (r) => r.name,
     listOrder: 'ORDER BY name ASC',
+    searchSql: '(name ILIKE $1 OR leader ILIKE $1)',
+    searchHint: 'Search by name or leader',
     columns: ['name', 'description', 'leader', 'contact_email', 'image_url'],
     displayFields: [
       { key: 'name', label: 'Name' },
@@ -166,6 +175,8 @@ const ENTITIES = {
     title: 'Announcements',
     label: (r) => r.message,
     listOrder: 'ORDER BY created_at DESC, id DESC',
+    searchSql: '(message ILIKE $1)',
+    searchHint: 'Search announcements',
     columns: ['message', 'active', 'expiry_utc'],
     displayFields: [
       { key: 'message', label: 'Message' },
@@ -206,12 +217,17 @@ function registerEntity(name, cfg) {
     catchAsync(async (req, res) => {
       const page = pageFrom(req);
       const offset = (page - 1) * PER_PAGE;
+      const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 100) : '';
+      const searching = q !== '' && cfg.searchSql;
+      const where = searching ? `WHERE ${cfg.searchSql}` : '';
+      const params = searching ? [`%${q}%`] : [];
       const [rows, count] = await Promise.all([
         pool.query(
-          `SELECT * FROM ${cfg.table} ${cfg.listOrder} LIMIT $1 OFFSET $2`,
-          [PER_PAGE, offset]
+          `SELECT * FROM ${cfg.table} ${where} ${cfg.listOrder}
+           LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+          [...params, PER_PAGE, offset]
         ),
-        pool.query(`SELECT COUNT(*)::int AS count FROM ${cfg.table}`),
+        pool.query(`SELECT COUNT(*)::int AS count FROM ${cfg.table} ${where}`, params),
       ]);
       const totalPages = Math.max(1, Math.ceil(count.rows[0].count / PER_PAGE));
       res.render('layouts/main', {
@@ -223,6 +239,9 @@ function registerEntity(name, cfg) {
         rows: rows.rows,
         page,
         totalPages,
+        q,
+        searchHint: cfg.searchHint || 'Search',
+        duplicable: !!cfg.duplicable,
       });
     })
   );
@@ -260,6 +279,7 @@ function registerEntity(name, cfg) {
          VALUES (${placeholders}, NOW(), NOW())`,
         values
       );
+      logActivity(req.user.username, 'created', name, cfg.label(parsed.data));
       return res.redirect(`${cfg.base}?success=1`);
     })
   );
@@ -330,6 +350,7 @@ function registerEntity(name, cfg) {
         );
         return res.redirect(`${cfg.base}/${id}/conflict?token=${pending.rows[0].id}`);
       }
+      logActivity(req.user.username, 'updated', name, cfg.label(parsed.data));
       return res.redirect(`${cfg.base}?success=1`);
     })
   );
@@ -406,6 +427,7 @@ function registerEntity(name, cfg) {
         values
       );
       await pool.query('DELETE FROM pending_edits WHERE id = $1', [token]);
+      logActivity(req.user.username, 'updated', name, cfg.label(data));
       return res.redirect(`${cfg.base}?success=1`);
     })
   );
@@ -439,10 +461,45 @@ function registerEntity(name, cfg) {
     catchAsync(async (req, res) => {
       const id = idFrom(req);
       if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
-      await pool.query(`DELETE FROM ${cfg.table} WHERE id = $1`, [id]);
+      const deleted = await pool.query(
+        `DELETE FROM ${cfg.table} WHERE id = $1 RETURNING *`,
+        [id]
+      );
+      if (deleted.rows[0]) {
+        logActivity(req.user.username, 'deleted', name, cfg.label(deleted.rows[0]));
+      }
       return res.redirect(`${cfg.base}?success=1`);
     })
   );
+
+  // DUPLICATE — open the New form prefilled from an existing record (recurring
+  // events / sermon series). Nothing is saved until the form is submitted.
+  if (cfg.duplicable) {
+    router.get(
+      `${cfg.base}/:id/duplicate`,
+      auth,
+      catchAsync(async (req, res) => {
+        const id = idFrom(req);
+        if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
+        const result = await pool.query(`SELECT * FROM ${cfg.table} WHERE id = $1`, [id]);
+        if (result.rows.length === 0) {
+          return res.redirect(`${cfg.base}?error=notfound`);
+        }
+        const record = { ...result.rows[0] };
+        delete record.id;
+        delete record.created_at;
+        delete record.last_modified;
+        res.render('layouts/main', {
+          bodyPath: cfg.formView,
+          title: `New ${cfg.title}`,
+          admin: true,
+          mode: 'new',
+          base: cfg.base,
+          record,
+        });
+      })
+    );
+  }
 }
 
 Object.entries(ENTITIES).forEach(([name, cfg]) => registerEntity(name, cfg));
@@ -471,6 +528,9 @@ router.get(
             )
           : Promise.resolve({ rows: [] }),
       ]);
+    const recentActivity = await pool.query(
+      'SELECT username, action, entity, label, created_at FROM activity_log ORDER BY created_at DESC, id DESC LIMIT 10'
+    );
     res.render('layouts/main', {
       bodyPath: '../pages/admin/dashboard',
       title: 'Dashboard',
@@ -485,6 +545,7 @@ router.get(
         unreadMessages: unreadMessages.rows[0].c,
       },
       recentBackups: recentBackups.rows,
+      recentActivity: recentActivity.rows,
     });
   })
 );
@@ -643,6 +704,7 @@ router.post(
        SELECT $1, $2, $3, $4, COALESCE(MAX(display_order), 0) + 10, NOW(), NOW() FROM staff`,
       [name, title, bio, image_url]
     );
+    logActivity(req.user.username, 'created', 'staff', name);
     return res.redirect('/admin/staff?success=1');
   })
 );
@@ -699,6 +761,7 @@ router.post(
       );
       return res.redirect(`/admin/staff/${id}/conflict?token=${pending.rows[0].id}`);
     }
+    logActivity(req.user.username, 'updated', 'staff', name);
     return res.redirect('/admin/staff?success=1');
   })
 );
@@ -793,7 +856,10 @@ router.post(
   catchAsync(async (req, res) => {
     const id = idFrom(req);
     if (id === null) return res.redirect('/admin/staff?error=notfound');
-    await pool.query('DELETE FROM staff WHERE id = $1', [id]);
+    const deleted = await pool.query('DELETE FROM staff WHERE id = $1 RETURNING name', [id]);
+    if (deleted.rows[0]) {
+      logActivity(req.user.username, 'deleted', 'staff', deleted.rows[0].name);
+    }
     return res.redirect('/admin/staff?success=1');
   })
 );
@@ -952,6 +1018,7 @@ router.post(
        FROM sunday_school_classes`,
       [name, age_group, location, teacher, description]
     );
+    logActivity(req.user.username, 'created', 'sunday school', name);
     return res.redirect('/admin/sunday-school?success=1');
   })
 );
@@ -1010,6 +1077,7 @@ router.post(
       );
       return res.redirect(`/admin/sunday-school/${id}/conflict?token=${pending.rows[0].id}`);
     }
+    logActivity(req.user.username, 'updated', 'sunday school', name);
     return res.redirect('/admin/sunday-school?success=1');
   })
 );
@@ -1106,7 +1174,13 @@ router.post(
   catchAsync(async (req, res) => {
     const id = idFrom(req);
     if (id === null) return res.redirect('/admin/sunday-school?error=notfound');
-    await pool.query('DELETE FROM sunday_school_classes WHERE id = $1', [id]);
+    const deleted = await pool.query(
+      'DELETE FROM sunday_school_classes WHERE id = $1 RETURNING name',
+      [id]
+    );
+    if (deleted.rows[0]) {
+      logActivity(req.user.username, 'deleted', 'sunday school', deleted.rows[0].name);
+    }
     return res.redirect('/admin/sunday-school?success=1');
   })
 );
@@ -1313,6 +1387,7 @@ router.post(
         ]
       );
     }
+    logActivity(req.user.username, 'updated', 'church info', d.church_name || 'Church Info');
     return res.redirect('/admin/church?success=1');
   })
 );
@@ -1365,6 +1440,66 @@ router.post(
       }
       throw err;
     }
+    logActivity(req.user.username, 'created', 'user', `${username} (${role})`);
+    return res.redirect('/admin/users?success=1');
+  })
+);
+
+// Change a user's role. Self-changes are blocked (no accidental lockout from
+// the Users page), and the last superadmin can never be demoted.
+router.post(
+  '/admin/users/:id/role',
+  auth,
+  requireRole('superadmin'),
+  catchAsync(async (req, res) => {
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/users?error=notfound');
+    if (id === req.user.id) return res.redirect('/admin/users?error=self');
+    const parsed = z.object({ role: z.enum(['superadmin', 'editor']) }).safeParse(req.body);
+    if (!parsed.success) return res.redirect('/admin/users?error=invalid');
+
+    const target = await pool.query('SELECT username, role FROM admins WHERE id = $1', [id]);
+    if (target.rows.length === 0) return res.redirect('/admin/users?error=notfound');
+    const { username, role: oldRole } = target.rows[0];
+    const newRole = parsed.data.role;
+    if (oldRole === newRole) return res.redirect('/admin/users?success=1');
+
+    if (oldRole === 'superadmin') {
+      const count = await pool.query(
+        "SELECT COUNT(*)::int AS c FROM admins WHERE role = 'superadmin'"
+      );
+      if (count.rows[0].c <= 1) {
+        return res.redirect('/admin/users?error=lastsuperadmin');
+      }
+    }
+    await pool.query('UPDATE admins SET role = $1 WHERE id = $2', [newRole, id]);
+    logActivity(req.user.username, 'updated', 'user', `${username} role → ${newRole}`);
+    return res.redirect('/admin/users?success=1');
+  })
+);
+
+// Reset another user's password (forgotten-password recovery without the
+// ADMIN_RESET_TOKEN env dance). Self-resets are blocked — use /admin/account,
+// which keeps the current session signed in.
+router.post(
+  '/admin/users/:id/password',
+  auth,
+  requireRole('superadmin'),
+  catchAsync(async (req, res) => {
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin/users?error=notfound');
+    if (id === req.user.id) return res.redirect('/admin/users?error=self');
+    const parsed = z.object({ password: z.string().min(12).max(200) }).safeParse(req.body);
+    if (!parsed.success) return res.redirect('/admin/users?error=invalid');
+
+    const hashed = await bcrypt.hash(parsed.data.password, 12);
+    // token_version bump revokes the target's existing sessions immediately.
+    const updated = await pool.query(
+      'UPDATE admins SET hashed_password = $1, token_version = token_version + 1 WHERE id = $2 RETURNING username',
+      [hashed, id]
+    );
+    if (updated.rows.length === 0) return res.redirect('/admin/users?error=notfound');
+    logActivity(req.user.username, 'updated', 'user', `${updated.rows[0].username} password reset`);
     return res.redirect('/admin/users?success=1');
   })
 );
@@ -1376,7 +1511,7 @@ router.post(
   catchAsync(async (req, res) => {
     const id = idFrom(req);
     if (id === null) return res.redirect('/admin/users?error=notfound');
-    const target = await pool.query('SELECT id, role FROM admins WHERE id = $1', [id]);
+    const target = await pool.query('SELECT id, username, role FROM admins WHERE id = $1', [id]);
     if (target.rows.length === 0) {
       return res.redirect('/admin/users?error=notfound');
     }
@@ -1389,6 +1524,7 @@ router.post(
       }
     }
     await pool.query('DELETE FROM admins WHERE id = $1', [id]);
+    logActivity(req.user.username, 'deleted', 'user', target.rows[0].username);
     return res.redirect('/admin/users?success=1');
   })
 );
@@ -1454,6 +1590,24 @@ router.post(
       return res.redirect(`/admin?backup=1&backupemail=${emailSent ? '1' : '0'}`);
     }
     return res.status(200).json({ backed_up: true, email_sent: emailSent });
+  })
+);
+
+// Download a stored backup as a JSON file (superadmin, browser session only).
+router.get(
+  '/admin/backups/:id/download',
+  auth,
+  requireRole('superadmin'),
+  catchAsync(async (req, res) => {
+    const id = idFrom(req);
+    if (id === null) return res.redirect('/admin?error=notfound');
+    const result = await pool.query('SELECT payload, created_at FROM backups WHERE id = $1', [id]);
+    if (result.rows.length === 0) return res.redirect('/admin?error=notfound');
+    const stamp = new Date(result.rows[0].created_at).toISOString().replace(/[:.]/g, '-');
+    res
+      .type('application/json')
+      .setHeader('Content-Disposition', `attachment; filename="backup-${id}-${stamp}.json"`);
+    res.send(JSON.stringify(result.rows[0].payload, null, 2));
   })
 );
 
