@@ -161,6 +161,22 @@ function cookieJar(res) {
       'account page renders change-password form',
       account.status === 200 && accountBody.includes('Change Password')
     );
+
+    const search = await get('/admin/sermons?q=zzz_no_such_sermon', { headers: { cookie: session } });
+    const searchBody = await search.text();
+    check(
+      'admin sermon search renders empty state',
+      search.status === 200 && searchBody.includes('No sermons match')
+    );
+
+    // A fresh database has only the seeded admin; their own row hides the
+    // role/reset controls (self-guard), so assert the guard markers instead.
+    const users = await get('/admin/users', { headers: { cookie: session } });
+    const usersBody = await users.text();
+    check(
+      'users page renders with self-guard markers',
+      users.status === 200 && usersBody.includes('(you)') && usersBody.includes('Add New User')
+    );
   }
 }
 {

@@ -4,8 +4,9 @@
   <% if (query && query.success) { %><p class="flash flash-success">Saved successfully</p><% } %>
   <% if (query && query.error === 'duplicate') { %><p class="flash flash-error">That username is already taken</p><% } %>
   <% if (query && query.error === 'invalid') { %><p class="flash flash-error">Username must be alphanumeric/underscore and password at least 12 characters</p><% } %>
-  <% if (query && query.error === 'lastsuperadmin') { %><p class="flash flash-error">You cannot delete the last superadmin</p><% } %>
+  <% if (query && query.error === 'lastsuperadmin') { %><p class="flash flash-error">There must always be at least one superadmin</p><% } %>
   <% if (query && query.error === 'notfound') { %><p class="flash flash-error">That user no longer exists</p><% } %>
+  <% if (query && query.error === 'self') { %><p class="flash flash-error">You cannot change your own role or reset your own password here — use My Account</p><% } %>
 
   <table class="admin-table">
     <thead>
@@ -13,20 +14,44 @@
     </thead>
     <tbody>
       <% users.forEach(function (u) { %>
+        <% var isSelf = locals.user && user.id === u.id; %>
         <tr>
-          <td data-label="Username"><%= u.username %></td>
-          <td data-label="Role"><%= u.role %></td>
+          <td data-label="Username"><%= u.username %><%= isSelf ? ' (you)' : '' %></td>
+          <td data-label="Role">
+            <% if (isSelf) { %>
+              <%= u.role %>
+            <% } else { %>
+              <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/role">
+                <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+                <select name="role" aria-label="Role for <%= u.username %>">
+                  <option value="editor" <%= u.role === 'editor' ? 'selected' : '' %>>editor</option>
+                  <option value="superadmin" <%= u.role === 'superadmin' ? 'selected' : '' %>>superadmin</option>
+                </select>
+                <button type="submit" class="btn btn-outline btn-sm">Save</button>
+              </form>
+            <% } %>
+          </td>
           <td data-label="Created"><%= u.created_at ? new Date(u.created_at).toISOString().slice(0,10) : '' %></td>
           <td class="row-actions">
-            <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/delete">
-              <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
-              <button type="submit" class="btn btn-line-danger btn-sm">Delete</button>
-            </form>
+            <% if (!isSelf) { %>
+              <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/password">
+                <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+                <input type="password" name="password" minlength="12" placeholder="New password (12+ chars)" autocomplete="new-password" aria-label="New password for <%= u.username %>" required />
+                <button type="submit" class="btn btn-outline btn-sm">Reset password</button>
+              </form>
+              <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/delete">
+                <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+                <button type="submit" class="btn btn-line-danger btn-sm">Delete</button>
+              </form>
+            <% } else { %>
+              <a class="btn btn-outline btn-sm" href="/admin/account">My Account</a>
+            <% } %>
           </td>
         </tr>
       <% }) %>
     </tbody>
   </table>
+  <p class="field-note">Resetting a password signs that user out everywhere. Role changes take effect on their next page load.</p>
 
   <h2 class="section-title">Add New User</h2>
   <form class="admin-form" method="POST" action="/admin/users">

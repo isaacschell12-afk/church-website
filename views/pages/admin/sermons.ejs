@@ -7,6 +7,8 @@
   <% if (query && query.success) { %><p class="flash flash-success">Saved successfully</p><% } %>
   <% if (query && query.error) { %><p class="flash flash-error">There was a problem with that request</p><% } %>
 
+  <%- include('./_search') %>
+
   <% if (rows && rows.length) { %>
     <table class="admin-table">
       <thead>
@@ -20,6 +22,7 @@
             <td data-label="Pastor"><%= r.pastor %></td>
             <td class="row-actions">
               <a class="btn btn-outline btn-sm" href="/admin/sermons/<%= r.id %>/edit">Edit</a>
+              <a class="btn btn-outline btn-sm" href="/admin/sermons/<%= r.id %>/duplicate">Duplicate</a>
               <a class="btn btn-line-danger btn-sm" href="/admin/sermons/<%= r.id %>/delete">Delete</a>
             </td>
           </tr>
@@ -29,6 +32,6 @@
 
     <%- include('./_pagination', { base: '/admin/sermons', page: page, totalPages: totalPages }) %>
   <% } else { %>
-    <p class="empty">No sermons yet.</p>
+    <p class="empty"><%= locals.q ? 'No sermons match your search.' : 'No sermons yet.' %></p>
   <% } %>
 </section>

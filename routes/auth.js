@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const pool = require('../db/pool');
+const logActivity = require('../db/logActivity');
 const auth = require('../middleware/auth');
 const catchAsync = require('../middleware/catchAsync');
 
@@ -182,6 +183,7 @@ router.post(
     console.log(
       `[${new Date().toISOString()}] password changed for username="${admin.username}"`
     );
+    logActivity(admin.username, 'updated', 'account', 'changed own password');
     return res.redirect('/admin/account?success=1');
   })
 );
