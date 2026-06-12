@@ -28,9 +28,14 @@
   <meta property="og:image" content="<%= shareImage %>" />
   <% } %>
   <meta name="twitter:card" content="<%= locals.ogImage ? 'summary_large_image' : 'summary' %>" />
+  <link rel="alternate" type="application/rss+xml" title="<%= siteName %> — Sermons" href="<%= (locals.baseUrl || '') %>/sermons/feed.xml" />
   <% } %>
   <meta name="csrf-token" content="<%= locals.csrfToken || '' %>" />
   <link rel="icon" href="<%= church && church.favicon_url ? church.favicon_url : '/images/favicon.ico' %>" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png" />
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#16233F" />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-600.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/fraunces-400-italic.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/inter-400.woff2" crossorigin />
@@ -63,7 +68,7 @@
       <div class="container nav-bar">
         <a class="brand" href="/">
           <% if (church && church.logo_url) { %>
-            <img class="brand-logo" src="<%= church.logo_url %>" alt="<%= church.church_name %>" data-fallback="/images/church-logo-placeholder.png" />
+            <img class="brand-logo" src="<%= imgOpt(church.logo_url, 400) %>" alt="<%= church.church_name %>" data-fallback="/images/church-logo-placeholder.png" />
           <% } else { %>
             <span class="brand-name"><%= church && church.church_name ? church.church_name : 'Our Church' %></span>
           <% } %>

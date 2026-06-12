@@ -11,6 +11,36 @@ jobs:
     name: Build & validate
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: church
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/church
+      JWT_SECRET: ci_only_jwt_secret_0123456789abcdef0123456789abcdef
+      CSRF_SECRET: ci_only_csrf_secret_0123456789abcdef0123456789abcdef
+      BACKUP_SECRET: ci_only_backup_secret_0123456789abcdef0123456789abcdef0123456789abcdef
+      BACKUP_EMAIL: ci@example.com
+      CHURCH_CONTACT_EMAIL: ci@example.com
+      RESEND_API_KEY: re_ci_placeholder
+      CLOUDINARY_CLOUD_NAME: ci
+      CLOUDINARY_API_KEY: '000000000000000'
+      CLOUDINARY_API_SECRET: ci_placeholder
+      DEFAULT_ADMIN_USER: admin
+      DEFAULT_ADMIN_PASSWORD: ci_admin_password_min_12
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,12 +55,22 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Check source files parse
-        # No test suite yet — verify every JS file is syntactically valid.
         run: |
           find . -path ./node_modules -prune -o -name '*.js' -print \
             | xargs -I{} node --check {}
 
-      - name: Smoke-check server boots
-        # server.js requires env to fully run, so just confirm it loads
-        # without a syntax/require error by type-checking the entrypoint.
-        run: node --check server.js
+      - name: Run migrations
+        run: node db/migrate.js
+
+      - name: Start server
+        run: |
+          node server.js &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/health > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          echo "server did not become healthy" >&2
+          exit 1
+
+      - name: Run smoke tests
+        run: node test/smoke.mjs http://localhost:3000
