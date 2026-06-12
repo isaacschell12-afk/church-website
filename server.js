@@ -5,12 +5,14 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
+const compression = require('compression');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const { rateLimit } = require('express-rate-limit');
 const { doubleCsrf } = require('csrf-csrf');
 
 const pool = require('./db/pool');
+const runBackup = require('./db/runBackup');
 const errorHandler = require('./middleware/errorHandler');
 
 const publicRoutes = require('./routes/public');
@@ -119,11 +121,23 @@ app.use(
 
 app.use(morgan('combined'));
 
-// ── Static files with a one-day cache ───────────────────────────────────────
+// Gzip/Brotli responses — Railway does not compress for us, and the HTML/CSS
+// payloads shrink ~70%.
+app.use(compression());
+
+// ── Static files ────────────────────────────────────────────────────────────
+// CSS/JS/fonts are referenced with a per-deploy ?v= token (fonts live under
+// /css/), so they can be cached for a year as immutable; images and other
+// unversioned files keep the one-day cache.
 app.use(
   express.static(path.join(__dirname, 'public'), {
-    setHeaders: (res) => {
-      res.setHeader('Cache-Control', 'public, max-age=86400');
+    setHeaders: (res, filePath) => {
+      const rel = path.relative(path.join(__dirname, 'public'), filePath);
+      const versioned = rel.startsWith('css') || rel.startsWith('js');
+      res.setHeader(
+        'Cache-Control',
+        versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=86400'
+      );
     },
   })
 );
@@ -169,6 +183,15 @@ app.use(async (req, res, next) => {
   res.locals.baseUrl = (process.env.SITE_URL || `${req.protocol}://${req.get('host')}`)
     .replace(/\/+$/, '');
   res.locals.reqPath = req.path;
+  // Cloudinary delivery optimization: inject f_auto (WebP/AVIF for supporting
+  // browsers) + q_auto, and optionally cap the width. Non-Cloudinary URLs
+  // (placeholders, external images) pass through untouched.
+  res.locals.imgOpt = function (url, width) {
+    const u = String(url || '');
+    if (!u.includes('res.cloudinary.com') || !u.includes('/upload/')) return u;
+    const t = `f_auto,q_auto${width ? `,w_${width},c_limit` : ''}`;
+    return u.replace('/upload/', `/upload/${t}/`);
+  };
   res.locals.fmtDate = function (d) {
     if (!d) return '';
     const parts = String(d).slice(0, 10).split('-');
@@ -290,6 +313,30 @@ async function start() {
   const server = app.listen(PORT, () => {
     console.log(`[${new Date().toISOString()}] server listening on port ${PORT}`);
   });
+
+  // ── Automatic backups ──────────────────────────────────────────────────────
+  // Defaults to every 24h in production; AUTO_BACKUP_HOURS overrides (0 disables).
+  // Off in development so local runs don't spam the backups table and inbox.
+  const backupHours = Number(process.env.AUTO_BACKUP_HOURS || (isProd ? '24' : '0'));
+  if (Number.isFinite(backupHours) && backupHours > 0) {
+    setInterval(() => {
+      runBackup(pool)
+        .then(({ backupId, emailSent }) => {
+          console.log(
+            `[${new Date().toISOString()}] scheduled backup ${backupId} complete (email ${emailSent ? 'sent' : 'FAILED'})`
+          );
+        })
+        .catch((err) => {
+          console.error(
+            `[${new Date().toISOString()}] scheduled backup failed:`,
+            err && err.stack ? err.stack : err
+          );
+        });
+    }, backupHours * 60 * 60 * 1000).unref();
+    console.log(
+      `[${new Date().toISOString()}] automatic backups enabled (every ${backupHours}h)`
+    );
+  }
 
   function shutdown(signal) {
     console.log(`[${new Date().toISOString()}] ${signal} received — draining pool`);

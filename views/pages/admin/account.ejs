@@ -1,0 +1,27 @@
+<section>
+  <h1 class="page-title">My Account</h1>
+
+  <% if (query && query.success) { %><p class="flash flash-success">Password changed — your other sessions have been signed out</p><% } %>
+  <% if (query && query.error === 'wrongpassword') { %><p class="flash flash-error">Current password is incorrect</p><% } %>
+  <% if (query && query.error === 'mismatch') { %><p class="flash flash-error">New passwords do not match</p><% } %>
+  <% if (query && query.error === 'invalid') { %><p class="flash flash-error">New password must be at least 12 characters</p><% } %>
+
+  <p class="card-meta">Signed in as <strong><%= user.username %></strong> (<%= user.role %>)</p>
+
+  <h2 class="section-title">Change Password</h2>
+  <form class="admin-form" method="POST" action="/admin/account/password">
+    <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+
+    <label for="current_password">Current password</label>
+    <input type="password" id="current_password" name="current_password" autocomplete="current-password" required />
+
+    <label for="new_password">New password</label>
+    <input type="password" id="new_password" name="new_password" minlength="12" autocomplete="new-password" required />
+    <p class="field-note">Minimum 12 characters. Changing your password signs out every other session.</p>
+
+    <label for="confirm_password">Confirm new password</label>
+    <input type="password" id="confirm_password" name="confirm_password" minlength="12" autocomplete="new-password" required />
+
+    <button type="submit" class="btn btn-navy">Change Password</button>
+  </form>
+</section>
