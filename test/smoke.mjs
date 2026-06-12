@@ -169,11 +169,13 @@ function cookieJar(res) {
       search.status === 200 && searchBody.includes('No sermons match')
     );
 
+    // A fresh database has only the seeded admin; their own row hides the
+    // role/reset controls (self-guard), so assert the guard markers instead.
     const users = await get('/admin/users', { headers: { cookie: session } });
     const usersBody = await users.text();
     check(
-      'users page offers role + password management',
-      users.status === 200 && usersBody.includes('Reset password') && usersBody.includes('(you)')
+      'users page renders with self-guard markers',
+      users.status === 200 && usersBody.includes('(you)') && usersBody.includes('Add New User')
     );
   }
 }
