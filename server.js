@@ -79,12 +79,26 @@ const app = express();
 // cookies behave correctly.
 app.set('trust proxy', 1);
 
-// Canonical host: 301 www.* to the apex so search engines and shared links
-// converge on a single hostname.
+// Canonical host. With GoDaddy → Railway, the apex (tmpcfamily.net) can't be
+// CNAMEd, so GoDaddy forwards the apex to www and `www` is the canonical host
+// (CNAME'd to Railway; pin it with SITE_URL=https://www.tmpcfamily.net). If a
+// bare-apex request still reaches the app, 301 it to www. Guarded to the
+// configured canonical so localhost and the *.up.railway.app domain are
+// untouched — and so it can never loop against GoDaddy's apex→www forwarding.
 app.use((req, res, next) => {
-  const host = (req.headers.host || '').toLowerCase();
-  if (host.startsWith('www.')) {
-    return res.redirect(301, `${req.protocol}://${host.slice(4)}${req.originalUrl}`);
+  try {
+    if (process.env.SITE_URL) {
+      const canonicalHost = new URL(process.env.SITE_URL).host.toLowerCase();
+      if (canonicalHost.startsWith('www.')) {
+        const apex = canonicalHost.slice(4);
+        const host = (req.headers.host || '').toLowerCase();
+        if (host === apex) {
+          return res.redirect(301, `${req.protocol}://${canonicalHost}${req.originalUrl}`);
+        }
+      }
+    }
+  } catch (err) {
+    /* malformed SITE_URL — fall through without redirecting */
   }
   next();
 });
