@@ -39,6 +39,16 @@ module.exports = async function auth(req, res, next) {
       role: admin.role,
     };
     res.locals.user = req.user;
+    // Unread-messages count for the nav badge on every admin page. Advisory
+    // UI only — a count failure must never block an admin action.
+    try {
+      const unread = await pool.query(
+        'SELECT COUNT(*)::int AS c FROM contact_messages WHERE is_read = false'
+      );
+      res.locals.unreadMessages = unread.rows[0].c;
+    } catch (err) {
+      res.locals.unreadMessages = 0;
+    }
     return next();
   } catch (err) {
     // Database error — not an auth failure; let the error handler respond.

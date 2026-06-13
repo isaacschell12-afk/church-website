@@ -1,6 +1,7 @@
 <form class="search-form" method="GET" action="<%= base %>">
   <label class="sr-only" for="admin-q"><%= searchHint %></label>
   <input type="text" id="admin-q" name="q" value="<%= q || '' %>" placeholder="<%= searchHint %>" maxlength="100" />
+  <% if (locals.sort) { %><input type="hidden" name="sort" value="<%= sort %>" /><% } %>
   <button type="submit" class="btn btn-outline">Search</button>
-  <% if (q) { %><a class="btn btn-ghost" href="<%= base %>">Clear</a><% } %>
+  <% if (q) { %><a class="btn btn-ghost" href="<%= base %><%= locals.sort ? '?sort=' + encodeURIComponent(sort) : '' %>">Clear</a><% } %>
 </form>

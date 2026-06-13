@@ -1,0 +1,13 @@
+<%
+  /* Sortable column header. Expects locals: base, q, sort — plus per-include
+     params key + label. Clicking toggles asc → desc and resets to page 1. */
+  var cur = locals.sort || '';
+  var isAsc = cur === key;
+  var isDesc = cur === '-' + key;
+  var sp = new URLSearchParams();
+  if (locals.q) sp.set('q', q);
+  sp.set('sort', isAsc ? '-' + key : key);
+%>
+<th aria-sort="<%= isAsc ? 'ascending' : isDesc ? 'descending' : 'none' %>">
+  <a class="sort-link<%= isAsc || isDesc ? ' is-active' : '' %>" href="<%= base %>?<%= sp.toString() %>"><%= label %><% if (isAsc) { %> &#9650;<% } else if (isDesc) { %> &#9660;<% } %></a>
+</th>

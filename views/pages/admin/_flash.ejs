@@ -1,0 +1,15 @@
+<%
+  /* Success/error flash for admin list pages. Expects locals: query, and
+     optionally publicUrl (fn) — when a save redirect carries ?id=, the flash
+     links straight to the public page so the editor can eyeball the result. */
+  var flashView = null;
+  if (locals.query && query.success && query.id && /^\d+$/.test(String(query.id)) && locals.publicUrl) {
+    flashView = publicUrl(query.id);
+  }
+%>
+<% if (query && query.success) { %>
+  <p class="flash flash-success">Saved successfully<% if (flashView) { %> &mdash; <a href="<%= flashView %>" target="_blank" rel="noopener">view it on the site</a><% } %></p>
+<% } %>
+<% if (query && query.error) { %>
+  <p class="flash flash-error"><%= query.error === 'notfound' ? 'That item could not be found' : query.error === 'conflictexpired' ? 'That edit session expired — please try again' : 'There was a problem with that request' %></p>
+<% } %>
