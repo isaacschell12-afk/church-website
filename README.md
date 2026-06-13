@@ -12,8 +12,9 @@ frontend. One project, one Railway deployment, one PostgreSQL database.
 - Security: Helmet CSP, `express-rate-limit`, Zod validation, bcryptjs hashing
 - Images: Multer (memory) → `file-type` magic-byte check → Cloudinary
 - Email: Resend (contact form + daily JSON backup + 500-error alerts)
+- SEO: dynamic `/sitemap.xml` + `/robots.txt`, per-page meta / Open Graph / schema.org JSON-LD; public feeds at `/sermons/feed.xml` (RSS) and `/events.ics` (iCal)
 - Deploys: Railway, building from the GitHub repo (`isaacschell12-afk/church-website`) on push to `main`; CI runs on every PR
-- Fonts served locally (Playfair Display + Inter) — no external CDN
+- Fonts served locally (**Fraunces + Inter**, committed under `public/css/fonts/`) — no external CDN
 
 ## Local development
 
@@ -24,15 +25,15 @@ npm run migrate           # creates tables + seeds church_info and default admin
 npm start                 # runs migrations then boots the server
 ```
 
-Visit `http://localhost:3000`. Admin login at `/admin/login`
-(username/password from `DEFAULT_ADMIN_USER` / `DEFAULT_ADMIN_PASSWORD`).
+Requires **Node 18+** (developed on Node 24). Visit `http://localhost:3000`.
+Admin login at `/admin/login` (username/password from `DEFAULT_ADMIN_USER` /
+`DEFAULT_ADMIN_PASSWORD`).
 
-> **Fonts:** the repo references `/public/css/fonts/*.woff2`. Download the
-> Playfair Display and Inter `.woff2` files (e.g. from
-> [Fontsource](https://fontsource.org)) and drop them into
-> `public/css/fonts/` with the exact filenames listed at the top of
-> `public/css/main.css`. They are intentionally **not** loaded from
-> `fonts.googleapis.com` because the CSP forbids it.
+> **Fonts:** the **Fraunces** and **Inter** `.woff2` files are already committed
+> under `public/css/fonts/` and served locally — there is nothing to download.
+> They are intentionally **not** loaded from `fonts.googleapis.com` because the
+> CSP forbids it. If you ever replace them, keep the exact filenames listed at
+> the top of `public/css/main.css`.
 
 ## Environment variables (13 — all validated on startup)
 
@@ -95,7 +96,9 @@ is known; `AUTO_BACKUP_HOURS` is optional.)
 
 **STEP 6 — Deploy.** Railway builds and deploys from the connected GitHub repo — push to
 `main` (or hit **Deploy** in Railway). Confirm `GET /health` returns `ok`, and check the
-Railway logs show migrations applied and the default admin seeded.
+Railway logs show migrations applied and the default admin seeded. **After your first
+login, immediately change the seeded admin password** at `/admin/account` (it signs out
+every other session).
 
 **STEP 7 — Custom domain (GoDaddy → Railway).** In Railway, add both
 `www.TMPCfamily.net` and `TMPCfamily.net` (apex) as custom domains, and copy the CNAME
@@ -117,25 +120,40 @@ apex, so **`www` is the live host and the apex forwards to it**:
 > host (or flip `SITE_URL` to the apex and adjust the redirect accordingly).
 
 **STEP 8 — Wait 48 hours** for DNS propagation. Do NOT announce the site. Verify on
-dnschecker.org that `TMPCfamily.net` resolves worldwide before going public.
+dnschecker.org that `TMPCfamily.net` resolves worldwide before going public. Once live,
+submit `https://www.TMPCfamily.net/sitemap.xml` to **Google Search Console** so the site
+starts appearing in search.
 
 **STEP 9 — Giving iframe whitelisting.** Contact Pushpay or Tithe.ly support directly and
 request iframe embed whitelisting for `TMPCfamily.net`. This needs a support ticket,
 not just a dashboard setting. Allow 1–3 business days.
 
-**STEP 10 — Backups.** Backups now run **automatically inside the app** — every 24h in
-production (tune with `AUTO_BACKUP_HOURS`), emailed off-site and stored in the database.
-No external scheduler is required. *Optional belt-and-suspenders:* add a cron-job.org job
-`POST https://www.TMPCfamily.net/admin/backup`, header `Authorization: Bearer [BACKUP_SECRET]`,
-for an independent off-platform trigger.
+**STEP 10 — Backups & restore.** Backups run **automatically inside the app** — every 24h
+in production (tune with `AUTO_BACKUP_HOURS`), emailed off-site and stored in the database;
+superadmins can also run/download one from the dashboard. No external scheduler is required.
+*Optional belt-and-suspenders:* add a cron-job.org job `POST https://www.TMPCfamily.net/admin/backup`,
+header `Authorization: Bearer [BACKUP_SECRET]`, for an independent off-platform trigger.
+
+To **restore** content (sermons, events, ministries, staff, Sunday School, announcements,
+church info) from a backup, run `db/restore.js` against the database — it never touches
+admins, messages, or backup rows:
+
+```bash
+node db/restore.js --latest               # dry run: show what the newest backup would restore
+node db/restore.js --latest --yes         # restore the newest stored backup
+node db/restore.js backup.json --yes      # restore from an emailed JSON backup file
+```
 
 **STEP 11 — UptimeRobot.** Monitor `GET https://www.TMPCfamily.net/health` every 5
 minutes. Enable email alerts. Prevents Railway cold starts and notifies you of downtime.
 
-**STEP 12 — Password reset.** In Railway set `ADMIN_RESET_TOKEN` to any string. POST to
-`/admin/auth/reset-password` with JSON body
-`{"resetToken":"[token]","username":"[admin username]","newPassword":"[min 12 chars]"}`.
-Immediately after success, remove `ADMIN_RESET_TOKEN` from Railway and redeploy.
+**STEP 12 — Password management.** Day to day, each admin changes their own password at
+`/admin/account`, and a **superadmin can reset another user's password** (and change roles)
+from `/admin/users` — no env vars needed. The `ADMIN_RESET_TOKEN` flow below is only the
+**locked-out / no-superadmin emergency** path: in Railway set `ADMIN_RESET_TOKEN` to any
+string, POST to `/admin/auth/reset-password` with JSON body
+`{"resetToken":"[token]","username":"[admin username]","newPassword":"[min 12 chars]"}`,
+then immediately remove `ADMIN_RESET_TOKEN` from Railway and redeploy.
 
 **STEP 13 — Railway plan.** Starter ($5/mo) required — the free tier sleeps and causes
 backup failures. Upgrade to Pro ($20/mo) if monthly visitors exceed 5,000.
@@ -149,6 +167,8 @@ it) and `www`, both pointing to the Railway target, and set SSL/TLS mode to **Fu
 
 **STEP 15 — Roles.** `superadmin` has full access. `editor` can manage sermons, events,
 ministries, staff, and announcements — but cannot access church info, users, or backup.
+Every content change is recorded in the dashboard **activity log** (who/what/when), and
+admin lists are searchable; sermons and events can be duplicated for recurring entries.
 
 **STEP 16 — Future changes.** Keep git history. Before any Claude Code session run
 `git add . && git commit -m 'before session'` so you can roll back if a session goes wrong.
@@ -165,5 +185,7 @@ pattern across all tables.
 
 ## Project structure
 
-See the top-level folders: `migrations/`, `public/`, `views/`, `routes/`,
-`middleware/`, `db/`, plus `server.js` at the root.
+See the top-level folders: `migrations/` (sequential `.sql`, auto-applied by
+`db/migrate.js`), `public/`, `views/`, `routes/`, `middleware/`, `db/` (pool, migrate,
+`runBackup.js`, `restore.js`, `logActivity.js`), `test/` (`smoke.mjs`, run by CI),
+`.github/workflows/` (CI), plus `server.js` at the root.
