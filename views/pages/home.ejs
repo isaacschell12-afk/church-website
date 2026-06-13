@@ -8,7 +8,7 @@
         <p class="hero-tagline"><%= church.tagline %></p>
       <% } %>
       <div class="hero-actions">
-        <a class="btn btn-gold" href="/visit"><%= church && church.hero_cta_label ? church.hero_cta_label : 'Plan Your Visit' %></a>
+        <a class="btn btn-gold" href="/contact"><%= church && church.hero_cta_label ? church.hero_cta_label : 'Get in Touch' %></a>
         <a class="btn btn-ghost" href="/sermons">Watch a Sermon</a>
       </div>
     </div>
@@ -36,10 +36,10 @@
 <section class="section<%= announcements && announcements.length ? ' section--flush-top' : '' %>" aria-label="Find your way">
   <div class="container">
     <div class="next-steps">
-      <a class="next-step-card" href="/visit">
+      <a class="next-step-card" href="/contact">
         <span class="next-step-title">I'm New</span>
-        <span class="next-step-text">Plan your first visit — here's what to expect.</span>
-        <span class="next-step-arrow">Plan a visit &rarr;</span>
+        <span class="next-step-text">We'd love to meet you — reach out and we'll help you find your way.</span>
+        <span class="next-step-arrow">Get in touch &rarr;</span>
       </a>
       <a class="next-step-card" href="/sunday-school">
         <span class="next-step-title">Sunday School</span>

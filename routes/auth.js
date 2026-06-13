@@ -104,6 +104,47 @@ router.post(
   })
 );
 
+// ── Session status + refresh (powers the expiry-warning banner) ─────────────
+// GET /admin/session — deliberately NOT behind the auth middleware: it must
+// answer "no" with JSON instead of a login redirect. Advisory only (verifies
+// the JWT signature/expiry, no DB hit), so it leaks nothing actionable.
+router.get('/admin/session', (req, res) => {
+  const token = req.cookies && req.cookies.token;
+  if (!token) return res.json({ authenticated: false });
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const expiresIn = Math.max(0, Math.floor(payload.exp - Date.now() / 1000));
+    return res.json({ authenticated: true, expiresIn });
+  } catch (err) {
+    return res.json({ authenticated: false });
+  }
+});
+
+// POST /admin/session/refresh — re-issue the 8h cookie so a long editing
+// session doesn't expire mid-form. auth re-validates the DB row and
+// token_version; the global CSRF middleware covers the POST.
+router.post(
+  '/admin/session/refresh',
+  auth,
+  catchAsync(async (req, res) => {
+    const result = await pool.query('SELECT token_version FROM admins WHERE id = $1', [
+      req.user.id,
+    ]);
+    const token = jwt.sign(
+      {
+        id: req.user.id,
+        username: req.user.username,
+        role: req.user.role,
+        token_version: result.rows[0].token_version,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+    res.cookie('token', token, cookieOptions());
+    return res.json({ ok: true, expiresIn: EIGHT_HOURS_MS / 1000 });
+  })
+);
+
 // POST /admin/logout
 router.post('/admin/logout', (req, res) => {
   res.clearCookie('token', {

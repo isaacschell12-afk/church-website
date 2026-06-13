@@ -352,17 +352,6 @@ router.get(
   })
 );
 
-// GET /visit — Plan a Visit
-router.get('/visit', (req, res) => {
-  res.render('layouts/main', {
-    bodyPath: '../pages/visit',
-    title: 'Plan a Visit',
-    metaDescription: metaText(
-      `Planning your first visit to ${churchName(res.locals.church)}? What to expect, what to wear, where to park, and when we meet.`
-    ),
-  });
-});
-
 // GET /beliefs — What We Believe
 router.get('/beliefs', (req, res) => {
   res.render('layouts/main', {
@@ -417,7 +406,7 @@ router.get('/contact', (req, res) => {
 
 // ── SEO: robots.txt + sitemap.xml ────────────────────────────────────────────
 const SITEMAP_STATIC_PATHS = [
-  '/', '/about', '/beliefs', '/visit', '/sunday-school',
+  '/', '/about', '/beliefs', '/sunday-school',
   '/ministries', '/sermons', '/events', '/give', '/contact',
 ];
 

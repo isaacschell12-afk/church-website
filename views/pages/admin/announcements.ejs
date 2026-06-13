@@ -1,28 +1,44 @@
 <section>
+  <% var rs = locals.listState ? '?return=' + encodeURIComponent(listState) : ''; %>
   <div class="admin-bar">
     <h1 class="page-title">Announcements</h1>
-    <a class="btn btn-gold" href="/admin/announcements/new">Add New</a>
+    <span class="admin-bar-actions">
+      <a class="btn btn-ghost" href="/" target="_blank" rel="noopener">View site&nbsp;&nearr;</a>
+      <a class="btn btn-gold" href="/admin/announcements/new<%= rs %>" data-shortcut-new>Add New</a>
+    </span>
   </div>
 
-  <% if (query && query.success) { %><p class="flash flash-success">Saved successfully</p><% } %>
-  <% if (query && query.error) { %><p class="flash flash-error">There was a problem with that request</p><% } %>
+  <%- include('./_flash') %>
 
   <%- include('./_search') %>
 
   <% if (rows && rows.length) { %>
     <table class="admin-table">
       <thead>
-        <tr><th>Message</th><th>Active</th><th>Expires (UTC)</th><th>Actions</th></tr>
+        <tr>
+          <%- include('./_sort', { key: 'message', label: 'Message' }) %>
+          <%- include('./_sort', { key: 'active', label: 'Active' }) %>
+          <%- include('./_sort', { key: 'expiry_utc', label: 'Expires (UTC)' }) %>
+          <th>Actions</th>
+        </tr>
       </thead>
       <tbody>
         <% rows.forEach(function (r) { %>
           <tr>
             <td data-label="Message"><%= r.message %></td>
-            <td data-label="Active"><%= r.active ? 'Yes' : 'No' %></td>
+            <td data-label="Active">
+              <form class="inline-form" method="POST" action="/admin/announcements/<%= r.id %>/toggle">
+                <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+                <input type="hidden" name="return_to" value="<%= locals.listState || '' %>" />
+                <button type="submit" class="btn btn-sm <%= r.active ? 'btn-line-gold' : 'btn-outline' %>" title="Click to turn <%= r.active ? 'off' : 'on' %>">
+                  <%= r.active ? 'On' : 'Off' %>
+                </button>
+              </form>
+            </td>
             <td data-label="Expires (UTC)"><%= r.expiry_utc ? new Date(r.expiry_utc).toISOString() : '' %></td>
             <td class="row-actions">
-              <a class="btn btn-outline btn-sm" href="/admin/announcements/<%= r.id %>/edit">Edit</a>
-              <a class="btn btn-line-danger btn-sm" href="/admin/announcements/<%= r.id %>/delete">Delete</a>
+              <a class="btn btn-outline btn-sm" href="/admin/announcements/<%= r.id %>/edit<%= rs %>">Edit</a>
+              <a class="btn btn-line-danger btn-sm" href="/admin/announcements/<%= r.id %>/delete<%= rs %>">Delete</a>
             </td>
           </tr>
         <% }) %>

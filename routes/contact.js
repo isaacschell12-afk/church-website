@@ -17,10 +17,6 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// The only source label our forms ever send (views/pages/visit.ejs). Anything
-// else is a forged submission trying to spoof an internal trust label.
-const ALLOWED_SOURCES = ['Planning a visit'];
-
 const contactSchema = z.object({
   // Reject CR/LF and other control characters so the name can never inject
   // headers when interpolated into the email Subject.
@@ -31,17 +27,6 @@ const contactSchema = z.object({
     .regex(/^[^\r\n\x00-\x1f\x7f]*$/, 'Name contains invalid characters'),
   email: z.string().email().max(200),
   message: z.string().min(1).max(2000),
-  // Optional origin label (e.g. "Planning a visit") so emails from the Plan a
-  // Visit form are identifiable without a second mail route. Constrained to a
-  // known allowlist since it is only ever set by the site's own forms.
-  source: z
-    .string()
-    .max(100)
-    .optional()
-    .transform((v) => (v == null || v.trim() === '' ? null : v.trim()))
-    .refine((v) => v === null || ALLOWED_SOURCES.includes(v), {
-      message: 'Unknown source',
-    }),
 });
 
 // POST /contact
@@ -59,7 +44,6 @@ router.post(
       name: req.body.name,
       email: req.body.email,
       message: req.body.message,
-      source: req.body.source,
     });
 
     if (!parsed.success) {
@@ -67,21 +51,19 @@ router.post(
         `[${new Date().toISOString()}] contact validation failed:`,
         parsed.error.flatten()
       );
-      // Send the visitor back to the form they came from.
-      const back = req.body.source ? '/visit?error=1' : '/contact?error=1';
-      return res.redirect(back);
+      return res.redirect('/contact?error=1');
     }
 
-    const { name, email, message, source } = parsed.data;
+    const { name, email, message } = parsed.data;
 
     // Persist to the DB FIRST so the message reaches the admin Messages inbox
     // regardless of email outcome.
     let stored = false;
     try {
       await pool.query(
-        `INSERT INTO contact_messages (name, email, message, source)
-         VALUES ($1, $2, $3, $4)`,
-        [name, email, message, source]
+        `INSERT INTO contact_messages (name, email, message)
+         VALUES ($1, $2, $3)`,
+        [name, email, message]
       );
       stored = true;
     } catch (err) {
@@ -99,17 +81,11 @@ router.post(
         from: `Church Website <${process.env.CHURCH_CONTACT_EMAIL}>`,
         to: process.env.CHURCH_CONTACT_EMAIL,
         replyTo: email,
-        subject: source
-          ? `${source} — ${name}`
-          : `New contact form message from ${name}`,
-        text:
-          (source ? `Source: ${source}\n` : '') +
-          `Name: ${name}\n` +
-          `Email: ${email}\n\n` +
-          `Message:\n${message}\n`,
+        subject: `New contact form message from ${name}`,
+        text: `Name: ${name}\n` + `Email: ${email}\n\n` + `Message:\n${message}\n`,
       });
       if (error) throw error;
-      return res.redirect(source ? '/visit?success=1' : '/contact?success=1');
+      return res.redirect('/contact?success=1');
     } catch (err) {
       console.error(
         `[${new Date().toISOString()}] contact email send failed:`,
@@ -118,9 +94,9 @@ router.post(
       // The message is safe in the inbox even when the email fails, so only
       // show the visitor an error when neither destination received it.
       if (stored) {
-        return res.redirect(source ? '/visit?success=1' : '/contact?success=1');
+        return res.redirect('/contact?success=1');
       }
-      return res.redirect(source ? '/visit?error=1' : '/contact?error=1');
+      return res.redirect('/contact?error=1');
     }
   })
 );

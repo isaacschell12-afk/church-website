@@ -2,6 +2,7 @@
   <a class="content-link back-link" href="/admin/staff">&larr; Back to staff</a>
   <h1 class="page-title"><%= mode === 'edit' ? 'Edit Staff Member' : 'New Staff Member' %></h1>
 
+  <% if (query && query.success) { %><p class="flash flash-success">Saved — add the next one below</p><% } %>
   <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
 
   <form class="admin-form" method="POST" action="<%= mode === 'edit' ? '/admin/staff/' + record.id : '/admin/staff' %>">
@@ -17,7 +18,7 @@
     <input type="text" id="title" name="title" maxlength="100" value="<%= record.title || '' %>" />
 
     <label for="bio">Bio</label>
-    <textarea id="bio" name="bio" rows="6"><%= record.bio || '' %></textarea>
+    <textarea id="bio" name="bio" rows="6" maxlength="10000"><%= record.bio || '' %></textarea>
 
     <label for="image_url">Photo</label>
     <input type="text" id="image_url" name="image_url" value="<%= record.image_url || '' %>" />
@@ -27,6 +28,11 @@
       <span class="upload-status" role="status" data-upload-status></span>
     </div>
 
-    <button type="submit" class="btn btn-navy">Save</button>
+    <div class="btn-row">
+      <button type="submit" class="btn btn-navy">Save</button>
+      <% if (mode === 'new') { %>
+        <button type="submit" class="btn btn-outline" name="after" value="another">Save &amp; add another</button>
+      <% } %>
+    </div>
   </form>
 </section>
