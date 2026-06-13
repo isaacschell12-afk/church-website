@@ -11,7 +11,8 @@ frontend. One project, one Railway deployment, one PostgreSQL database.
 - CSRF: `csrf-csrf` double-submit cookie mode (no session middleware)
 - Security: Helmet CSP, `express-rate-limit`, Zod validation, bcryptjs hashing
 - Images: Multer (memory) → `file-type` magic-byte check → Cloudinary
-- Email: Resend (contact form + weekly JSON backup)
+- Email: Resend (contact form + daily JSON backup + 500-error alerts)
+- Deploys: Railway, building from the GitHub repo (`isaacschell12-afk/church-website`) on push to `main`; CI runs on every PR
 - Fonts served locally (Playfair Display + Inter) — no external CDN
 
 ## Local development
@@ -44,7 +45,7 @@ The server crashes on boot with a full list of any missing vars.
 | `JWT_SECRET` | **min 32 chars** |
 | `CSRF_SECRET` | **min 32 chars** — must differ from `JWT_SECRET` |
 | `BACKUP_SECRET` | **min 64 chars** — used as the backup Bearer token |
-| `BACKUP_EMAIL` | weekly backup recipient |
+| `BACKUP_EMAIL` | daily backup recipient + 500-error alerts |
 | `CHURCH_CONTACT_EMAIL` | contact-form recipient |
 | `RESEND_API_KEY` | Resend |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary |
@@ -56,6 +57,13 @@ The server crashes on boot with a full list of any missing vars.
 
 **There is NO `SESSION_SECRET`. Do not add one.** This stack uses no session middleware.
 
+Optional (not validated on startup):
+
+| Var | Notes |
+| --- | --- |
+| `SITE_URL` | Canonical origin for SEO / Open Graph / sitemap. Set to `https://www.TMPCfamily.net` in production (see STEP 7 — also drives the apex→www redirect) |
+| `AUTO_BACKUP_HOURS` | Hours between automatic in-app backups; defaults to 24 in production, 0 (off) elsewhere |
+
 ---
 
 ## Deployment steps
@@ -63,8 +71,10 @@ The server crashes on boot with a full list of any missing vars.
 **STEP 0 — Domain.** The domain **`TMPCfamily.net` is already registered at GoDaddy** —
 you own it, so there is nothing to buy. DNS is handled in STEP 7 below (GoDaddy → Railway).
 
-**STEP 1 — Railway project.** Create a Railway project. Add the PostgreSQL addon.
-Copy `DATABASE_URL` from the Railway dashboard.
+**STEP 1 — Railway project from GitHub.** In Railway: **New → Deploy from GitHub repo →
+`isaacschell12-afk/church-website`** (authorize Railway's GitHub app if prompted). This
+links the repo so Railway **auto-deploys on every push to `main`** and builds PRs. Add the
+**PostgreSQL** addon to the project and copy `DATABASE_URL` from the Railway dashboard.
 
 **STEP 2 — Cloudinary.** Free account at cloudinary.com. Copy Cloud Name, API Key, API Secret.
 
@@ -79,11 +89,13 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # CSR
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"   # BACKUP_SECRET
 ```
 
-**STEP 5 — Set all 14 env variables** in the Railway dashboard. There is no
-`SESSION_SECRET` — do not add one.
+**STEP 5 — Set the 13 required env variables** in the Railway dashboard. There is no
+`SESSION_SECRET` — do not add one. (`SITE_URL` is added later in STEP 7, once the domain
+is known; `AUTO_BACKUP_HOURS` is optional.)
 
-**STEP 6 — Deploy.** Confirm `GET /health` returns `ok`. Check Railway logs confirm
-migrations applied and the default admin was seeded.
+**STEP 6 — Deploy.** Railway builds and deploys from the connected GitHub repo — push to
+`main` (or hit **Deploy** in Railway). Confirm `GET /health` returns `ok`, and check the
+Railway logs show migrations applied and the default admin seeded.
 
 **STEP 7 — Custom domain (GoDaddy → Railway).** In Railway, add both
 `www.TMPCfamily.net` and `TMPCfamily.net` (apex) as custom domains, and copy the CNAME
@@ -140,6 +152,8 @@ ministries, staff, and announcements — but cannot access church info, users, o
 
 **STEP 16 — Future changes.** Keep git history. Before any Claude Code session run
 `git add . && git commit -m 'before session'` so you can roll back if a session goes wrong.
+`main` is protected: changes land via PR, CI must pass, then squash-merge — and the
+merge to `main` is what triggers Railway to build and deploy the new version.
 
 **STEP 17 — Cloudinary contingency.** If Cloudinary changes free-tier pricing, existing
 image URLs stay valid until account suspension. To migrate: export all `image_url` values
