@@ -61,7 +61,7 @@ The server crashes on boot with a full list of any missing vars.
 ## Deployment steps
 
 **STEP 0 — Domain.** The domain **`TMPCfamily.net` is already registered at GoDaddy** —
-you own it, so there is nothing to buy. DNS is handled in STEP 7 / STEP 14 below.
+you own it, so there is nothing to buy. DNS is handled in STEP 7 below (GoDaddy → Railway).
 
 **STEP 1 — Railway project.** Create a Railway project. Add the PostgreSQL addon.
 Copy `DATABASE_URL` from the Railway dashboard.
@@ -69,7 +69,7 @@ Copy `DATABASE_URL` from the Railway dashboard.
 **STEP 2 — Cloudinary.** Free account at cloudinary.com. Copy Cloud Name, API Key, API Secret.
 
 **STEP 3 — Resend.** Free account at resend.com. Verify **`TMPCfamily.net`** as a sending
-domain (add the DKIM/SPF records in Cloudflare DNS once STEP 14 is done). Copy the API key.
+domain (add the DKIM/SPF records in **GoDaddy → Domain → DNS**). Copy the API key.
 
 **STEP 4 — Generate secrets.** Run once per secret for `JWT_SECRET`, `CSRF_SECRET`, and `BACKUP_SECRET`:
 
@@ -85,19 +85,24 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"   # BAC
 **STEP 6 — Deploy.** Confirm `GET /health` returns `ok`. Check Railway logs confirm
 migrations applied and the default admin was seeded.
 
-**STEP 7 — Custom domain (GoDaddy → Cloudflare → Railway).** In Railway, add both
-`TMPCfamily.net` (apex) and `www.TMPCfamily.net`, and copy the CNAME target Railway
-provides for each. Because GoDaddy cannot CNAME the apex, route DNS through Cloudflare
-(STEP 14) so the apex can be **CNAME-flattened** to Railway:
+**STEP 7 — Custom domain (GoDaddy → Railway).** In Railway, add both
+`www.TMPCfamily.net` and `TMPCfamily.net` (apex) as custom domains, and copy the CNAME
+target Railway shows for `www` (e.g. `xxxx.up.railway.app`). GoDaddy cannot CNAME the
+apex, so **`www` is the live host and the apex forwards to it**:
 
-1. Complete STEP 14 first (move nameservers to Cloudflare).
-2. In Cloudflare DNS add a **CNAME** for `TMPCfamily.net` (apex — Cloudflare flattens it)
-   pointing to the Railway target, **proxied** (orange cloud).
-3. Add a **CNAME** for `www` pointing to the Railway target, **proxied**.
-4. Set Cloudflare SSL/TLS mode to **Full**.
+1. In **GoDaddy → Domain → DNS**, add a **CNAME**: Host `www` → Value the Railway target,
+   TTL default. (Delete any parked `www` CNAME/A record GoDaddy created.)
+2. In **GoDaddy → Domain → Forwarding**, forward the apex `TMPCfamily.net` →
+   `https://www.TMPCfamily.net`, **Permanent (301)**, forward only (no masking).
+3. In Railway, set **`SITE_URL=https://www.TMPCfamily.net`** so canonical links, Open
+   Graph tags, and the sitemap all use the canonical host. The app also 301s any
+   bare-apex request that reaches it to `www`, so there is no redirect loop with the
+   GoDaddy forward.
 
-> Prefer not to use Cloudflare yet? In GoDaddy DNS, CNAME `www` to the Railway target and
-> use GoDaddy **domain forwarding** to send the apex `TMPCfamily.net` → `www.TMPCfamily.net`.
+> Optional hardening (not required): route DNS through the Cloudflare free tier (STEP 14)
+> to add DDoS protection, caching, and apex **CNAME-flattening** — which lets the apex
+> serve Railway directly instead of forwarding. If you do, keep `www` as the canonical
+> host (or flip `SITE_URL` to the apex and adjust the redirect accordingly).
 
 **STEP 8 — Wait 48 hours** for DNS propagation. Do NOT announce the site. Verify on
 dnschecker.org that `TMPCfamily.net` resolves worldwide before going public.
@@ -106,12 +111,13 @@ dnschecker.org that `TMPCfamily.net` resolves worldwide before going public.
 request iframe embed whitelisting for `TMPCfamily.net`. This needs a support ticket,
 not just a dashboard setting. Allow 1–3 business days.
 
-**STEP 10 — cron-job.org (weekly backup).** Create an account with a real, monitored
-email. Create a cron job: `POST https://TMPCfamily.net/admin/backup`, header
-`Authorization: Bearer [your BACKUP_SECRET]`, schedule weekly Sundays 2am, retries 3,
-failure notification enabled. Log in monthly — free accounts are purged for inactivity.
+**STEP 10 — Backups.** Backups now run **automatically inside the app** — every 24h in
+production (tune with `AUTO_BACKUP_HOURS`), emailed off-site and stored in the database.
+No external scheduler is required. *Optional belt-and-suspenders:* add a cron-job.org job
+`POST https://www.TMPCfamily.net/admin/backup`, header `Authorization: Bearer [BACKUP_SECRET]`,
+for an independent off-platform trigger.
 
-**STEP 11 — UptimeRobot.** Monitor `GET https://TMPCfamily.net/health` every 5
+**STEP 11 — UptimeRobot.** Monitor `GET https://www.TMPCfamily.net/health` every 5
 minutes. Enable email alerts. Prevents Railway cold starts and notifies you of downtime.
 
 **STEP 12 — Password reset.** In Railway set `ADMIN_RESET_TOKEN` to any string. POST to
@@ -122,11 +128,12 @@ Immediately after success, remove `ADMIN_RESET_TOKEN` from Railway and redeploy.
 **STEP 13 — Railway plan.** Starter ($5/mo) required — the free tier sleeps and causes
 backup failures. Upgrade to Pro ($20/mo) if monthly visitors exceed 5,000.
 
-**STEP 14 — Cloudflare.** Add `TMPCfamily.net` to the Cloudflare free tier. Cloudflare
-gives you two nameservers — in **GoDaddy → Domain → Nameservers**, switch from GoDaddy's
-defaults to that Cloudflare pair. Once Cloudflare shows the domain as active, do the
-apex/`www` CNAME setup in STEP 7. Keep records **proxied** for DDoS protection, caching,
-apex CNAME-flattening, and a second SSL layer at no cost.
+**STEP 14 — Cloudflare (optional).** Not needed for the GoDaddy → Railway path in STEP 7;
+add it only if you want DDoS protection, caching, apex CNAME-flattening, and a second SSL
+layer at no cost. Add `TMPCfamily.net` to the Cloudflare free tier; Cloudflare gives you
+two nameservers — in **GoDaddy → Domain → Nameservers**, switch from GoDaddy's defaults to
+that Cloudflare pair. Once active, add **proxied** CNAMEs for the apex (Cloudflare flattens
+it) and `www`, both pointing to the Railway target, and set SSL/TLS mode to **Full**.
 
 **STEP 15 — Roles.** `superadmin` has full access. `editor` can manage sermons, events,
 ministries, staff, and announcements — but cannot access church info, users, or backup.
