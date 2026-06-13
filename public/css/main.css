@@ -721,9 +721,9 @@ a.card:hover .thumb-img { transform: scale(1.045); }
 .spotlight .service-times { margin-top: var(--s2); }
 
 /* ── Sermons / video / map / giving embeds ───────────────────────────────── */
-.search-form { display: flex; align-items: stretch; gap: 0.6rem; margin-top: var(--s4); flex-wrap: wrap; max-width: 560px; }
-.search-form input[type="text"] { flex: 1 1 240px; height: 52px; padding-block: 0; }
-.search-form .btn { height: 52px; padding-block: 0; }
+.search-form { display: flex; align-items: center; gap: 0.6rem; margin-top: var(--s4); flex-wrap: wrap; max-width: 560px; }
+.search-form input[type="text"] { flex: 1 1 240px; width: auto; min-width: 0; height: 52px; padding-block: 0; }
+.search-form .btn { flex: 0 0 auto; height: 52px; padding-block: 0; margin-top: 0; }
 
 .video-wrap, .give-embed, .map-embed {
   position: relative; aspect-ratio: 16 / 9; background: var(--navy);
