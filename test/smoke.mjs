@@ -27,7 +27,6 @@ const PAGES = [
   ['/', '<title>'],
   ['/about', 'About'],
   ['/beliefs', 'Believe'],
-  ['/visit', 'Visit'],
   ['/sunday-school', 'Sunday School'],
   ['/ministries', 'Ministries'],
   ['/sermons', 'Sermons'],

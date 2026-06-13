@@ -1,4 +1,9 @@
-<% var pgQ = locals.q ? '&q=' + encodeURIComponent(locals.q) : ''; %>
+<%
+  var pgState = new URLSearchParams();
+  if (locals.q) pgState.set('q', q);
+  if (locals.sort) pgState.set('sort', sort);
+  var pgQ = pgState.toString() ? '&' + pgState.toString() : '';
+%>
 <% if (totalPages > 1) { %>
   <nav class="pagination" aria-label="Pagination">
     <% if (page > 1) { %>

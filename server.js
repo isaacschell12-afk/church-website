@@ -106,6 +106,7 @@ app.use(
         ],
         imgSrc: [
           "'self'",
+          'blob:', // local image previews in the admin upload widget
           'https://img.youtube.com',
           'https://i.ytimg.com',
           'https://res.cloudinary.com',
@@ -202,6 +203,25 @@ app.use(async (req, res, next) => {
       month: 'long',
       day: 'numeric',
       timeZone: 'UTC',
+    });
+  };
+  // Relative timestamps for admin lists ("3 days ago", exact date in title).
+  res.locals.relTime = function (d) {
+    if (!d) return '';
+    const then = new Date(d).getTime();
+    if (!Number.isFinite(then)) return '';
+    const s = Math.round((Date.now() - then) / 1000);
+    if (s < 45) return 'just now';
+    const m = Math.round(s / 60);
+    if (m < 60) return `${m} min ago`;
+    const h = Math.round(m / 60);
+    if (h < 24) return h === 1 ? '1 hour ago' : `${h} hours ago`;
+    const days = Math.round(h / 24);
+    if (days < 7) return days === 1 ? 'yesterday' : `${days} days ago`;
+    return new Date(d).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     });
   };
   res.locals.fmtTime = function (t) {

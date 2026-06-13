@@ -1,11 +1,14 @@
 <section>
-  <a class="content-link back-link" href="/admin/ministries">&larr; Back to ministries</a>
+  <% var backQs = locals.returnState ? '?' + returnState : ''; %>
+  <a class="content-link back-link" href="/admin/ministries<%= backQs %>">&larr; Back to ministries</a>
   <h1 class="page-title"><%= mode === 'edit' ? 'Edit Ministry' : 'New Ministry' %></h1>
 
+  <% if (query && query.success) { %><p class="flash flash-success">Saved — add the next one below</p><% } %>
   <% if (query && query.error) { %><p class="flash flash-error">Please check the fields and try again</p><% } %>
 
   <form class="admin-form" method="POST" action="<%= mode === 'edit' ? '/admin/ministries/' + record.id : '/admin/ministries' %>">
     <input type="hidden" name="_csrf" value="<%= locals.csrfToken || '' %>" />
+    <input type="hidden" name="return_to" value="<%= locals.returnState || '' %>" />
     <% if (mode === 'edit') { %>
       <input type="hidden" name="last_modified" value="<%= record.last_modified || '' %>" />
     <% } %>
@@ -14,7 +17,7 @@
     <input type="text" id="name" name="name" maxlength="200" value="<%= record.name || '' %>" required />
 
     <label for="description">Description</label>
-    <textarea id="description" name="description" rows="6"><%= record.description || '' %></textarea>
+    <textarea id="description" name="description" rows="6" maxlength="10000"><%= record.description || '' %></textarea>
 
     <label for="leader">Leader</label>
     <input type="text" id="leader" name="leader" maxlength="100" value="<%= record.leader || '' %>" />
@@ -30,6 +33,11 @@
       <span class="upload-status" role="status" data-upload-status></span>
     </div>
 
-    <button type="submit" class="btn btn-navy">Save</button>
+    <div class="btn-row">
+      <button type="submit" class="btn btn-navy">Save</button>
+      <% if (mode === 'new') { %>
+        <button type="submit" class="btn btn-outline" name="after" value="another">Save &amp; add another</button>
+      <% } %>
+    </div>
   </form>
 </section>

@@ -105,7 +105,7 @@ async function seedChurchInfo() {
       '',
       '',
       'Your generosity makes our ministry possible. Thank you for giving.',
-      'Plan Your Visit',
+      'Get in Touch',
       null,
       null,
       // statement_of_faith — structure only; TMPC supplies the real wording.

@@ -76,6 +76,36 @@ function uuidOrNull(value) {
   return typeof value === 'string' && UUID_RE.test(value) ? value : null;
 }
 
+// ── list-state helpers ──────────────────────────────────────────────────────
+// Whitelist the list-state params (q / page / sort) out of a raw query string
+// so post-save redirects land back on the exact list view the user came from.
+function listStateFrom(raw) {
+  const out = new URLSearchParams();
+  const inp = new URLSearchParams(String(raw || ''));
+  for (const key of ['q', 'page', 'sort']) {
+    const v = inp.get(key);
+    if (v) out.set(key, v.slice(0, 100));
+  }
+  return out.toString();
+}
+
+function backToList(cfg, ret, extra) {
+  const qs = [extra, ret].filter(Boolean).join('&');
+  return `${cfg.base}${qs ? `?${qs}` : ''}`;
+}
+
+function isoDateLocal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Most recent Sunday (today when it is Sunday) — the natural default date for
+// a new sermon entry.
+function lastSundayIso() {
+  const d = new Date();
+  d.setDate(d.getDate() - d.getDay());
+  return isoDateLocal(d);
+}
+
 // ── entity configs (sermons / events / ministries / announcements) ──────────
 const ENTITIES = {
   sermons: {
@@ -88,6 +118,9 @@ const ENTITIES = {
     listOrder: 'ORDER BY date DESC, id DESC',
     searchSql: '(title ILIKE $1 OR pastor ILIKE $1)',
     searchHint: 'Search by title or pastor',
+    sortable: { title: 'title', date: 'date', pastor: 'pastor' },
+    publicUrl: (id) => `/sermons/${id}`,
+    defaults: () => ({ date: lastSundayIso() }),
     duplicable: true,
     columns: ['title', 'date', 'pastor', 'description', 'youtube_id'],
     displayFields: [
@@ -118,6 +151,9 @@ const ENTITIES = {
     listOrder: 'ORDER BY date DESC, id DESC',
     searchSql: '(title ILIKE $1 OR location ILIKE $1)',
     searchHint: 'Search by title or location',
+    sortable: { title: 'title', date: 'date', location: 'location' },
+    publicUrl: (id) => `/events/${id}`,
+    defaults: () => ({ date: isoDateLocal(new Date()) }),
     duplicable: true,
     columns: ['title', 'date', 'time', 'location', 'description'],
     displayFields: [
@@ -148,6 +184,8 @@ const ENTITIES = {
     listOrder: 'ORDER BY name ASC',
     searchSql: '(name ILIKE $1 OR leader ILIKE $1)',
     searchHint: 'Search by name or leader',
+    sortable: { name: 'name', leader: 'leader' },
+    publicUrl: () => '/ministries',
     columns: ['name', 'description', 'leader', 'contact_email', 'image_url'],
     displayFields: [
       { key: 'name', label: 'Name' },
@@ -177,6 +215,9 @@ const ENTITIES = {
     listOrder: 'ORDER BY created_at DESC, id DESC',
     searchSql: '(message ILIKE $1)',
     searchHint: 'Search announcements',
+    sortable: { message: 'message', active: 'active', expiry_utc: 'expiry_utc' },
+    publicUrl: () => '/',
+    toggle: 'active',
     columns: ['message', 'active', 'expiry_utc'],
     displayFields: [
       { key: 'message', label: 'Message' },
@@ -221,15 +262,34 @@ function registerEntity(name, cfg) {
       const searching = q !== '' && cfg.searchSql;
       const where = searching ? `WHERE ${cfg.searchSql}` : '';
       const params = searching ? [`%${q}%`] : [];
+
+      // Column sorting: ?sort=key ascending, ?sort=-key descending. Only keys
+      // in the whitelist reach the SQL; anything else keeps the default order.
+      const rawSort = typeof req.query.sort === 'string' ? req.query.sort.slice(0, 40) : '';
+      const sortKey = rawSort.startsWith('-') ? rawSort.slice(1) : rawSort;
+      const sortCol = cfg.sortable && cfg.sortable[sortKey];
+      const sort = sortCol ? rawSort : '';
+      const order = sortCol
+        ? `ORDER BY ${sortCol} ${rawSort.startsWith('-') ? 'DESC' : 'ASC'}, id DESC`
+        : cfg.listOrder;
+
       const [rows, count] = await Promise.all([
         pool.query(
-          `SELECT * FROM ${cfg.table} ${where} ${cfg.listOrder}
+          `SELECT * FROM ${cfg.table} ${where} ${order}
            LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
           [...params, PER_PAGE, offset]
         ),
         pool.query(`SELECT COUNT(*)::int AS count FROM ${cfg.table} ${where}`, params),
       ]);
       const totalPages = Math.max(1, Math.ceil(count.rows[0].count / PER_PAGE));
+
+      // Current list state, threaded through edit/delete links as ?return= so
+      // saving drops the user back on this exact page of these exact results.
+      const state = new URLSearchParams();
+      if (q) state.set('q', q);
+      if (page > 1) state.set('page', String(page));
+      if (sort) state.set('sort', sort);
+
       res.render('layouts/main', {
         bodyPath: cfg.listView,
         title: cfg.title,
@@ -240,8 +300,11 @@ function registerEntity(name, cfg) {
         page,
         totalPages,
         q,
+        sort,
+        listState: state.toString(),
         searchHint: cfg.searchHint || 'Search',
         duplicable: !!cfg.duplicable,
+        publicUrl: cfg.publicUrl || null,
       });
     })
   );
@@ -257,7 +320,8 @@ function registerEntity(name, cfg) {
         admin: true,
         mode: 'new',
         base: cfg.base,
-        record: {},
+        record: cfg.defaults ? cfg.defaults() : {},
+        returnState: listStateFrom(req.query.return),
       });
     }
   );
@@ -267,20 +331,26 @@ function registerEntity(name, cfg) {
     `${cfg.base}`,
     auth,
     catchAsync(async (req, res) => {
+      const ret = listStateFrom(req.body.return_to);
       const parsed = cfg.parse(req.body);
       if (!parsed.success) {
-        return res.redirect(`${cfg.base}/new?error=1`);
+        return res.redirect(`${cfg.base}/new?error=1${ret ? `&return=${encodeURIComponent(ret)}` : ''}`);
       }
       const values = valuesInColumnOrder(cfg, parsed.data);
       const cols = cfg.columns.join(', ');
       const placeholders = cfg.columns.map((_, i) => `$${i + 1}`).join(', ');
-      await pool.query(
+      const inserted = await pool.query(
         `INSERT INTO ${cfg.table} (${cols}, created_at, last_modified)
-         VALUES (${placeholders}, NOW(), NOW())`,
+         VALUES (${placeholders}, NOW(), NOW()) RETURNING id`,
         values
       );
-      logActivity(req.user.username, 'created', name, cfg.label(parsed.data));
-      return res.redirect(`${cfg.base}?success=1`);
+      const newId = inserted.rows[0].id;
+      logActivity(req.user.username, 'created', name, cfg.label(parsed.data), newId);
+      // "Save & add another" loops straight back to a fresh form.
+      if (req.body.after === 'another') {
+        return res.redirect(`${cfg.base}/new?success=1${ret ? `&return=${encodeURIComponent(ret)}` : ''}`);
+      }
+      return res.redirect(backToList(cfg, ret, `success=1&id=${newId}`));
     })
   );
 
@@ -304,6 +374,7 @@ function registerEntity(name, cfg) {
         mode: 'edit',
         base: cfg.base,
         record,
+        returnState: listStateFrom(req.query.return),
       });
     })
   );
@@ -315,9 +386,10 @@ function registerEntity(name, cfg) {
     catchAsync(async (req, res) => {
       const id = idFrom(req);
       if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
+      const ret = listStateFrom(req.body.return_to);
       const parsed = cfg.parse(req.body);
       if (!parsed.success) {
-        return res.redirect(`${cfg.base}/${id}/edit?error=1`);
+        return res.redirect(`${cfg.base}/${id}/edit?error=1${ret ? `&return=${encodeURIComponent(ret)}` : ''}`);
       }
 
       // Atomic optimistic-concurrency check: the UPDATE only matches when the
@@ -350,8 +422,8 @@ function registerEntity(name, cfg) {
         );
         return res.redirect(`${cfg.base}/${id}/conflict?token=${pending.rows[0].id}`);
       }
-      logActivity(req.user.username, 'updated', name, cfg.label(parsed.data));
-      return res.redirect(`${cfg.base}?success=1`);
+      logActivity(req.user.username, 'updated', name, cfg.label(parsed.data), id);
+      return res.redirect(backToList(cfg, ret, `success=1&id=${id}`));
     })
   );
 
@@ -427,7 +499,7 @@ function registerEntity(name, cfg) {
         values
       );
       await pool.query('DELETE FROM pending_edits WHERE id = $1', [token]);
-      logActivity(req.user.username, 'updated', name, cfg.label(data));
+      logActivity(req.user.username, 'updated', name, cfg.label(data), id);
       return res.redirect(`${cfg.base}?success=1`);
     })
   );
@@ -450,6 +522,7 @@ function registerEntity(name, cfg) {
         base: cfg.base,
         id,
         label: cfg.label(result.rows[0]),
+        returnState: listStateFrom(req.query.return),
       });
     })
   );
@@ -461,6 +534,7 @@ function registerEntity(name, cfg) {
     catchAsync(async (req, res) => {
       const id = idFrom(req);
       if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
+      const ret = listStateFrom(req.body.return_to);
       const deleted = await pool.query(
         `DELETE FROM ${cfg.table} WHERE id = $1 RETURNING *`,
         [id]
@@ -468,9 +542,38 @@ function registerEntity(name, cfg) {
       if (deleted.rows[0]) {
         logActivity(req.user.username, 'deleted', name, cfg.label(deleted.rows[0]));
       }
-      return res.redirect(`${cfg.base}?success=1`);
+      return res.redirect(backToList(cfg, ret, 'success=1'));
     })
   );
+
+  // TOGGLE — flip a boolean column (announcements' Active flag) straight from
+  // the list row, no form round-trip.
+  if (cfg.toggle) {
+    router.post(
+      `${cfg.base}/:id/toggle`,
+      auth,
+      catchAsync(async (req, res) => {
+        const id = idFrom(req);
+        if (id === null) return res.redirect(`${cfg.base}?error=notfound`);
+        const ret = listStateFrom(req.body.return_to);
+        const updated = await pool.query(
+          `UPDATE ${cfg.table} SET ${cfg.toggle} = NOT ${cfg.toggle}, last_modified = NOW()
+           WHERE id = $1 RETURNING *`,
+          [id]
+        );
+        if (updated.rows.length === 0) return res.redirect(`${cfg.base}?error=notfound`);
+        const flipped = updated.rows[0];
+        logActivity(
+          req.user.username,
+          'updated',
+          name,
+          `${cfg.label(flipped)} — ${cfg.toggle} ${flipped[cfg.toggle] ? 'on' : 'off'}`,
+          id
+        );
+        return res.redirect(backToList(cfg, ret, null));
+      })
+    );
+  }
 
   // DUPLICATE — open the New form prefilled from an existing record (recurring
   // events / sermon series). Nothing is saved until the form is submitted.
@@ -496,6 +599,7 @@ function registerEntity(name, cfg) {
           mode: 'new',
           base: cfg.base,
           record,
+          returnState: listStateFrom(req.query.return),
         });
       })
     );
@@ -503,6 +607,29 @@ function registerEntity(name, cfg) {
 }
 
 Object.entries(ENTITIES).forEach(([name, cfg]) => registerEntity(name, cfg));
+
+// Where a dashboard activity row should link. Content entities deep-link to
+// the record's edit screen (unless it was deleted); settings-style entities
+// link to their page.
+const ACTIVITY_EDIT_BASES = {
+  sermons: '/admin/sermons',
+  events: '/admin/events',
+  ministries: '/admin/ministries',
+  announcements: '/admin/announcements',
+  staff: '/admin/staff',
+  'sunday school': '/admin/sunday-school',
+};
+const ACTIVITY_PAGE_LINKS = {
+  user: '/admin/users',
+  'church info': '/admin/church',
+  account: '/admin/account',
+};
+function activityLink(row) {
+  if (row.action !== 'deleted' && row.record_id && ACTIVITY_EDIT_BASES[row.entity]) {
+    return `${ACTIVITY_EDIT_BASES[row.entity]}/${row.record_id}/edit`;
+  }
+  return ACTIVITY_PAGE_LINKS[row.entity] || null;
+}
 
 // ── Dashboard ───────────────────────────────────────────────────────────────
 router.get(
@@ -529,7 +656,7 @@ router.get(
           : Promise.resolve({ rows: [] }),
       ]);
     const recentActivity = await pool.query(
-      'SELECT username, action, entity, label, created_at FROM activity_log ORDER BY created_at DESC, id DESC LIMIT 10'
+      'SELECT username, action, entity, label, record_id, created_at FROM activity_log ORDER BY created_at DESC, id DESC LIMIT 10'
     );
     res.render('layouts/main', {
       bodyPath: '../pages/admin/dashboard',
@@ -545,7 +672,7 @@ router.get(
         unreadMessages: unreadMessages.rows[0].c,
       },
       recentBackups: recentBackups.rows,
-      recentActivity: recentActivity.rows,
+      recentActivity: recentActivity.rows.map((r) => ({ ...r, link: activityLink(r) })),
     });
   })
 );
@@ -699,12 +826,16 @@ router.post(
     const { name, title, bio, image_url } = parsed.data;
     // New staff go to the bottom of the list. Compute the order inside the
     // INSERT so concurrent creates cannot read the same MAX.
-    await pool.query(
+    const inserted = await pool.query(
       `INSERT INTO staff (name, title, bio, image_url, display_order, created_at, last_modified)
-       SELECT $1, $2, $3, $4, COALESCE(MAX(display_order), 0) + 10, NOW(), NOW() FROM staff`,
+       SELECT $1, $2, $3, $4, COALESCE(MAX(display_order), 0) + 10, NOW(), NOW() FROM staff
+       RETURNING id`,
       [name, title, bio, image_url]
     );
-    logActivity(req.user.username, 'created', 'staff', name);
+    logActivity(req.user.username, 'created', 'staff', name, inserted.rows[0].id);
+    if (req.body.after === 'another') {
+      return res.redirect('/admin/staff/new?success=1');
+    }
     return res.redirect('/admin/staff?success=1');
   })
 );
@@ -761,7 +892,7 @@ router.post(
       );
       return res.redirect(`/admin/staff/${id}/conflict?token=${pending.rows[0].id}`);
     }
-    logActivity(req.user.username, 'updated', 'staff', name);
+    logActivity(req.user.username, 'updated', 'staff', name, id);
     return res.redirect('/admin/staff?success=1');
   })
 );
@@ -1011,14 +1142,18 @@ router.post(
     const { name, age_group, location, teacher, description } = parsed.data;
     // New classes go to the bottom of the list. Compute the order inside the
     // INSERT so concurrent creates cannot read the same MAX.
-    await pool.query(
+    const inserted = await pool.query(
       `INSERT INTO sunday_school_classes
          (name, age_group, location, teacher, description, display_order, created_at, last_modified)
        SELECT $1, $2, $3, $4, $5, COALESCE(MAX(display_order), 0) + 10, NOW(), NOW()
-       FROM sunday_school_classes`,
+       FROM sunday_school_classes
+       RETURNING id`,
       [name, age_group, location, teacher, description]
     );
-    logActivity(req.user.username, 'created', 'sunday school', name);
+    logActivity(req.user.username, 'created', 'sunday school', name, inserted.rows[0].id);
+    if (req.body.after === 'another') {
+      return res.redirect('/admin/sunday-school/new?success=1');
+    }
     return res.redirect('/admin/sunday-school?success=1');
   })
 );
@@ -1077,7 +1212,7 @@ router.post(
       );
       return res.redirect(`/admin/sunday-school/${id}/conflict?token=${pending.rows[0].id}`);
     }
-    logActivity(req.user.username, 'updated', 'sunday school', name);
+    logActivity(req.user.username, 'updated', 'sunday school', name, id);
     return res.redirect('/admin/sunday-school?success=1');
   })
 );
@@ -1333,12 +1468,11 @@ router.post(
           { message: 'giving_embed_url must be an https URL on pushpay.com or tithe.ly' }
         ),
       give_intro: z.string().max(20000).optional().transform((v) => v || null),
-      hero_cta_label: z.string().max(50).optional().transform((v) => v || 'Plan Your Visit'),
+      hero_cta_label: z.string().max(50).optional().transform((v) => v || 'Get in Touch'),
       logo_url: z.string().max(2000).optional().transform((v) => v || null),
       favicon_url: z.string().max(2000).optional().transform((v) => v || null),
       // TMPC additions
       statement_of_faith: z.string().max(20000).optional().transform((v) => v || null),
-      visit_info: z.string().max(20000).optional().transform((v) => v || null),
       sunday_school_intro: z.string().max(20000).optional().transform((v) => v || null),
       sunday_school_schedule: z.string().max(20000).optional().transform((v) => v || null),
     });
@@ -1360,13 +1494,13 @@ router.post(
           (church_name, tagline, about, mission_statement, address, phone, email,
            service_times, timezone, maps_embed_url, giving_embed_url, give_intro,
            hero_cta_label, logo_url, favicon_url,
-           statement_of_faith, visit_info, sunday_school_intro, sunday_school_schedule)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
+           statement_of_faith, sunday_school_intro, sunday_school_schedule)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
         [
           d.church_name, d.tagline, d.about, d.mission_statement, d.address, d.phone, d.email,
           d.service_times, d.timezone, d.maps_embed_url || null, d.giving_embed_url, d.give_intro,
           d.hero_cta_label, d.logo_url, d.favicon_url,
-          d.statement_of_faith, d.visit_info, d.sunday_school_intro, d.sunday_school_schedule,
+          d.statement_of_faith, d.sunday_school_intro, d.sunday_school_schedule,
         ]
       );
     } else {
@@ -1375,14 +1509,14 @@ router.post(
           church_name = $1, tagline = $2, about = $3, mission_statement = $4, address = $5,
           phone = $6, email = $7, service_times = $8, timezone = $9, maps_embed_url = $10,
           giving_embed_url = $11, give_intro = $12, hero_cta_label = $13, logo_url = $14,
-          favicon_url = $15, statement_of_faith = $16, visit_info = $17,
-          sunday_school_intro = $18, sunday_school_schedule = $19
-         WHERE id = $20`,
+          favicon_url = $15, statement_of_faith = $16,
+          sunday_school_intro = $17, sunday_school_schedule = $18
+         WHERE id = $19`,
         [
           d.church_name, d.tagline, d.about, d.mission_statement, d.address, d.phone, d.email,
           d.service_times, d.timezone, d.maps_embed_url || null, d.giving_embed_url, d.give_intro,
           d.hero_cta_label, d.logo_url, d.favicon_url,
-          d.statement_of_faith, d.visit_info, d.sunday_school_intro, d.sunday_school_schedule,
+          d.statement_of_faith, d.sunday_school_intro, d.sunday_school_schedule,
           existing.rows[0].id,
         ]
       );
