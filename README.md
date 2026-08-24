@@ -170,8 +170,8 @@ ministries, staff, and announcements — but cannot access church info, users, o
 Every content change is recorded in the dashboard **activity log** (who/what/when), and
 admin lists are searchable; sermons and events can be duplicated for recurring entries.
 
-**STEP 16 — Future changes.** Keep git history. Before any Claude Code session run
-`git add . && git commit -m 'before session'` so you can roll back if a session goes wrong.
+**STEP 16 — Future changes.** Keep git history. Before any large editing session run
+`git add . && git commit -m 'before session'` so you can roll back if anything goes wrong.
 `main` is protected: changes land via PR, CI must pass, then squash-merge — and the
 merge to `main` is what triggers Railway to build and deploy the new version.
 
